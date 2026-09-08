@@ -1,0 +1,97 @@
+# OpenPak network status.
+#
+# This runs on a different machine from everything it watches. A status page on
+# the production box reports "up" right until the moment it cannot report at
+# all, which is the only moment anyone reads it.
+#
+# Two kinds of check live here. The public surface goes through Cloudflare, the
+# way a person reaches it, so a check passing means what a visitor experiences
+# is working — not merely that a process is alive. The console path is probed
+# straight at the origin IP, because those hostnames resolve to Nintendo for
+# everyone else; a console only reaches us through its own DNS redirect, so a
+# check that followed public DNS would be monitoring Nintendo.
+
+storage:
+  type: sqlite
+  path: /data/status.db
+
+ui:
+  title: OpenPak status
+  header: OpenPak
+  description: Live status of the OpenPak network.
+  link: https://openpak.org
+
+endpoints:
+  # ---- What a person uses ----
+  - name: Website
+    group: Public
+    url: https://openpak.org/
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 3000"
+
+  - name: Accounts
+    group: Public
+    url: https://account.openpak.org/healthz
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Console link page
+    group: Public
+    # The page a phone opens to link a console; served by the Switch adapter
+    # through the account host, so this covers both.
+    url: https://link.openpak.org/link
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+
+  # ---- What a console uses ----
+  # These names are Nintendo's. The container maps them to the origin IP, so
+  # the check reaches our adapter exactly as a console does. TLS verification
+  # is off because the certificates are signed by the OpenPak CA, which is the
+  # whole point of them.
+  - name: Device auth
+    group: Console
+    url: https://dauth-lp1.ndas.srv.nintendo.net/v8/challenge
+    method: POST
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].challenge != null"
+
+  - name: Account service
+    group: Console
+    # The key set the console verifies every token against: if this is wrong,
+    # nothing else the console does can succeed.
+    url: https://e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com/1.0.0/certificates
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].keys[0].kid != null"
+
+  - name: Sign-in page
+    group: Console
+    url: https://accounts.nintendo.com/connect/1.0.0/authorize
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Licence service
+    group: Console
+    # A 404 here is not an outage but it stops account setup, which is why it
+    # is watched separately from the rest.
+    url: https://dragons.hac.lp1.dragons.nintendo.net/v2/elicenses/exercise
+    method: POST
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"

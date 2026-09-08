@@ -1,0 +1,26 @@
+[Unit]
+Description=OpenPak status page (Gatus)
+After=network-online.target
+
+[Container]
+ContainerName=openpak-status
+# ghcr, not Docker Hub: this host cannot reach registry-1.docker.io at all
+# (i/o timeout), while ghcr and quay answer normally.
+Image=ghcr.io/twin/gatus:latest
+AutoUpdate=registry
+# Local only: the Cloudflare tunnel on this host publishes it.
+PublishPort=127.0.0.1:8450:8080
+Volume=%h/openpak-status/gatus.yaml:/config/config.yaml:ro,Z
+Volume=openpak-status-data:/data
+# The console-facing names resolve to Nintendo for everyone else. A console
+# reaches us because its own DNS is redirected; these do the same thing for the
+# prober, so the checks follow the console's path rather than the public one.
+# PodmanArgs rather than AddHost=: the deploy host runs podman 4.9, where that
+# quadlet key does not exist yet.
+PodmanArgs=--add-host=dauth-lp1.ndas.srv.nintendo.net:145.241.199.19 --add-host=e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com:145.241.199.19 --add-host=accounts.nintendo.com:145.241.199.19 --add-host=dragons.hac.lp1.dragons.nintendo.net:145.241.199.19
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
