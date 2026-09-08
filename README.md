@@ -43,10 +43,31 @@ Two things about that host, both discovered the hard way:
   `PodmanArgs=--add-host=…`. An `apt full-upgrade` will not change this;
   Ubuntu 24.04 ships 4.9.
 
-## Making it public
+## Two processes, and which one is public
 
-The page listens on `127.0.0.1:8450`; the Cloudflare tunnel already on that
-host publishes it. The tunnel is token-managed, so its routes live in the
-Cloudflare dashboard rather than on disk: add a public hostname
-`status.openpak.org` pointing at `http://localhost:8450` under Zero Trust →
-Networks → Tunnels. Cloudflare creates the DNS record itself.
+| Port | Process | Reachable from |
+| --- | --- | --- |
+| 8450 | `statuspage` — the OpenPak-branded page and `/api/status` | the internet, via the tunnel |
+| 8460 | Gatus — the checker, its scheduling, retries and history | localhost only |
+
+Gatus does the monitoring and stays private; `cmd/statuspage` renders what it
+found in the site's own colours and words. None of the hard parts of monitoring
+are reimplemented, and none of the presentation is left to a tool that does not
+know what any of these services are for.
+
+**Live at `status.openpak.org`.** The tunnel on that host is token-managed, so
+its routes live in the Cloudflare dashboard rather than on disk; the public
+hostname points at `http://localhost:8450`. If the page ever shows Gatus's own
+dashboard instead of this one, the tunnel is pointed at the checker.
+
+## Building the page
+
+```sh
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o statuspage ./cmd/statuspage
+scp statuspage <secondary-host>:~/openpak-status/statuspage
+scp openpak-statuspage.service <secondary-host>:~/.config/systemd/user/
+ssh <secondary-host> 'systemctl --user daemon-reload && systemctl --user restart openpak-statuspage'
+```
+
+A plain binary and a systemd user unit rather than a container: the deploy host
+cannot reach Docker Hub, and this needs nothing an image would provide.

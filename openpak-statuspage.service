@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenPak status page
+# Gatus does the checking; this only renders what it found. Wanting it is
+# enough — if the checker is down this page says so, which is more useful than
+# refusing to start.
+Wants=openpak-status.service
+After=openpak-status.service network-online.target
+
+[Service]
+ExecStart=%h/openpak-status/statuspage
+Environment=GATUS_URL=http://127.0.0.1:8460
+Environment=STATUS_ADDR=127.0.0.1:8450
+Restart=always
+RestartSec=5
+# It reads one JSON document and renders HTML; it needs nothing else.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=
+
+[Install]
+WantedBy=default.target

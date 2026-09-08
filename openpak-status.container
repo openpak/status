@@ -8,8 +8,9 @@ ContainerName=openpak-status
 # (i/o timeout), while ghcr and quay answer normally.
 Image=ghcr.io/twin/gatus:latest
 AutoUpdate=registry
-# Local only: the Cloudflare tunnel on this host publishes it.
-PublishPort=127.0.0.1:8450:8080
+# Localhost only, and NOT the port the tunnel points at: this is the checker,
+# and only the branded page (8450) is meant to be reachable from outside.
+PublishPort=127.0.0.1:8460:8080
 Volume=%h/openpak-status/gatus.yaml:/config/config.yaml:ro,Z
 Volume=openpak-status-data:/data
 # The console-facing names resolve to Nintendo for everyone else. A console
