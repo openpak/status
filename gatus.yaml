@@ -75,6 +75,21 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY].keys[0].kid != null"
 
+  - name: Default profile picture
+    group: Console
+    # Every account without a picture of its own is pointed here, and a 404
+    # stops "add account" with 2124-7404 -- twice now, because the picture
+    # was a file someone placed by hand rather than something the build
+    # carried. Watched from off-box so a deploy that loses it is noticed in a
+    # minute rather than by a person at a console.
+    url: https://cdn-image-e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com/1/default
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 1000"
+
   - name: Sign-in page
     group: Console
     url: https://accounts.nintendo.com/connect/1.0.0/authorize

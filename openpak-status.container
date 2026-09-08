@@ -18,7 +18,7 @@ Volume=openpak-status-data:/data
 # prober, so the checks follow the console's path rather than the public one.
 # PodmanArgs rather than AddHost=: the deploy host runs podman 4.9, where that
 # quadlet key does not exist yet.
-PodmanArgs=--add-host=dauth-lp1.ndas.srv.nintendo.net:145.241.199.19 --add-host=e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com:145.241.199.19 --add-host=accounts.nintendo.com:145.241.199.19 --add-host=dragons.hac.lp1.dragons.nintendo.net:145.241.199.19
+PodmanArgs=--add-host=dauth-lp1.ndas.srv.nintendo.net:145.241.199.19 --add-host=e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com:145.241.199.19 --add-host=accounts.nintendo.com:145.241.199.19 --add-host=dragons.hac.lp1.dragons.nintendo.net:145.241.199.19 --add-host=cdn-image-e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com:145.241.199.19
 
 [Service]
 Restart=always
