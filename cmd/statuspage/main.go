@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -89,8 +90,17 @@ type pageView struct {
 	Headline, Sub string
 	State         string // ok | some | major
 	Groups        []groupView
+	Regions       []region
 	Generated     string
 	Window        string
+}
+
+// region is a federation node as openpak.org lists it: approved, announced within the last
+// few minutes, and carrying whatever relays it runs. A node that stops announcing drops off
+// the list rather than turning red, which is the honest shape: nothing is claimed about it.
+type region struct {
+	Name, Country, Services string
+	Players                 int
 }
 
 var tmpl = template.Must(template.New("page").Parse(pageHTML))
@@ -105,6 +115,7 @@ type cache struct {
 
 func main() {
 	gatus := getenv("GATUS_URL", "http://127.0.0.1:8450")
+	regionsURL = getenv("OPENPAK_REGIONS_URL", "https://openpak.org/api/v1/regions")
 	addr := getenv("STATUS_ADDR", "127.0.0.1:8451")
 	c := &cache{}
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -175,7 +186,45 @@ func (c *cache) get(client *http.Client, gatus string) (*pageView, error) {
 		return nil, err
 	}
 	c.view, c.at = build(eps), time.Now()
+	c.view.Regions = fetchRegions(client)
 	return c.view, nil
+}
+
+var regionsURL string
+
+// fetchRegions reads the public region list. Its failure is not the network's: an empty list
+// draws no section, and the page says nothing it cannot back.
+func fetchRegions(client *http.Client) []region {
+	if regionsURL == "" {
+		return nil
+	}
+	resp, err := client.Get(regionsURL)
+	if err != nil {
+		log.Printf("status: regions: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+	var out struct {
+		Regions []struct {
+			Name     string            `json:"name"`
+			Country  string            `json:"country"`
+			Services map[string]string `json:"services"`
+			Players  int               `json:"players"`
+		} `json:"regions"`
+	}
+	if resp.StatusCode != http.StatusOK || json.NewDecoder(resp.Body).Decode(&out) != nil {
+		return nil
+	}
+	var rs []region
+	for _, r := range out.Regions {
+		keys := make([]string, 0, len(r.Services))
+		for k := range r.Services {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		rs = append(rs, region{Name: r.Name, Country: r.Country, Services: strings.Join(keys, ", "), Players: r.Players})
+	}
+	return rs
 }
 
 // barCount is how much history the strip shows. Enough to see a pattern,

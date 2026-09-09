@@ -87,6 +87,22 @@ footer { margin: 36px 0 8px; color: var(--muted); font-size: 13px; line-height: 
     <p>{{.Sub}}</p>
   </div>
 
+  {{if .Regions}}
+    <h2>Regions</h2>
+    <p>Places that run game relays. A room you host is served from the one for your country; friends join it from anywhere.</p>
+    <div class="card">
+      {{range .Regions}}
+      <div class="svc">
+        <div class="svc-head">
+          <span class="svc-name">{{.Name}} · {{.Country}}</span>
+          <span class="state up">{{.Players}} playing</span>
+        </div>
+        <p>{{.Services}}</p>
+      </div>
+      {{end}}
+    </div>
+  {{end}}
+
   {{range .Groups}}
     <h2>{{.Title}}</h2>
     <p>{{.Note}}</p>
