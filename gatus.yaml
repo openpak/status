@@ -110,3 +110,23 @@ endpoints:
       insecure: true
     conditions:
       - "[STATUS] == 200"
+
+  # ---- What a game session uses ----
+  # NPLN hands each Stardew/Wonder session an address on the origin IP; the
+  # gRPC side can be perfectly healthy while this port is unreachable, which
+  # is exactly how 2026-09-15 went: the rootless port forwarder died, the
+  # container lived, and every farm join failed for a day. Probed as a bare
+  # TCP connect, the same thing Pia does first.
+  - name: Stardew session port
+    group: Console
+    url: tcp://145.241.199.19:22200
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Wonder session port
+    group: Console
+    url: tcp://145.241.199.19:22220
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
