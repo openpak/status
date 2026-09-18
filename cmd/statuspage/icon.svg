@@ -8,5 +8,7 @@
   <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
   <circle cx="256" cy="256" r="180" stroke="white" stroke-width="20" fill="none" opacity="0.9"/>
   <path d="M160 256c0-53 43-96 96-96s96 43 96 96-43 96-96 96" stroke="white" stroke-width="20" stroke-linecap="round" fill="none" opacity="0.9"/>
-  <circle cx="256" cy="256" r="28" fill="white" opacity="0.95"/>
+  <g stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
+    <path d="M311 256h-22l-16.5 49.5L239.5 206.5 223 256H201"/>
+  </g>
 </svg>
