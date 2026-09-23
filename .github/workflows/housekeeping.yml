@@ -2,8 +2,9 @@ name: housekeeping
 
 # Keeps the org under GitHub's shared storage quota (the free plan's 500 MB covers private
 # artifacts and private packages together; v0.43.0 of website failed an upload on it).
-# scripts/housekeeping.sh keeps the newest 4 runs' artifacts per workflow and the newest 4
-# tagged versions of every image, with the platform manifests those tags reference.
+# scripts/housekeeping.sh keeps the newest 4 runs' artifacts per workflow, deletes every
+# artifact older than 3 days, and keeps the newest 4 tagged versions of every image, with the
+# platform manifests those tags reference. It never touches releases.
 #
 # Needs the HOUSEKEEPING_TOKEN secret: a classic PAT with repo, read:packages and
 # delete:packages (GITHUB_TOKEN cannot touch other repositories' artifacts or packages).
@@ -17,7 +18,10 @@ on:
         type: boolean
         default: true
 
-permissions: {}
+# contents: read is needed for the checkout of this private repo; everything else goes through
+# HOUSEKEEPING_TOKEN.
+permissions:
+  contents: read
 
 jobs:
   clean:
@@ -27,6 +31,7 @@ jobs:
       - env:
           GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
           KEEP: '4'
+          MAX_AGE_DAYS: '3'
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
         run: |
           [ -n "$GH_TOKEN" ] || { echo "HOUSEKEEPING_TOKEN is not set"; exit 1; }

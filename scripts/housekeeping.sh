@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # housekeeping.sh: keep the openpak org under its storage quota. Artifacts: keep those of
-# the newest $KEEP runs of each workflow in each repo. Container images: keep the newest
-# $KEEP tagged versions of each package plus the platform/attestation manifests their
+# the newest $KEEP runs of each workflow in each repo, and none older than $MAX_AGE_DAYS days
+# (the quota filled up and blocked releases on 2026-09-23 even with $KEEP runs kept).
+# Container images: keep the newest $KEEP tagged versions of each package plus the platform/attestation manifests their
 # indexes reference; delete every other version. Production pulls :latest (always kept)
 # or a pinned tag that is the newest release, so $KEEP >= 2 never removes a running image.
 #
 # DRY_RUN=1 (default) only prints. Needs GH_TOKEN with repo, read:packages, delete:packages.
 set -euo pipefail
-ORG=${ORG:-openpak}; KEEP=${KEEP:-4}; DRY_RUN=${DRY_RUN:-1}
+ORG=${ORG:-openpak}; KEEP=${KEEP:-4}; DRY_RUN=${DRY_RUN:-1}; MAX_AGE_DAYS=${MAX_AGE_DAYS:-3}
+cutoff=$(date -u -d "-${MAX_AGE_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
 
 del() { if [ "$DRY_RUN" = 1 ]; then echo "would delete $1"; else gh api -X DELETE "$1" >/dev/null && echo "deleted $1"; fi; }
 
@@ -20,8 +22,11 @@ for repo in $(gh repo list "$ORG" --limit 500 --json name -q '.[].name'); do
   keep=$(sort -k2,2 -k3,3r /tmp/a.txt | awk '!s[$2]++{print $2, $3}' | while read -r run t; do
       wf=$(gh api "repos/$ORG/$repo/actions/runs/$run" -q .workflow_id 2>/dev/null || echo gone)
       echo "$wf $t $run"; done | sort -k1,1 -k2,2r | awk -v k="$KEEP" '{n[$1]++} n[$1]<=k{print $3}')
-  while read -r id run _; do
-    grep -qx "$run" <<<"$keep" || del "repos/$ORG/$repo/actions/artifacts/$id"
+  while read -r id run created; do
+    # ISO-8601 UTC timestamps compare correctly as strings
+    if [[ "$created" < "$cutoff" ]] || ! grep -qx "$run" <<<"$keep"; then
+      del "repos/$ORG/$repo/actions/artifacts/$id"
+    fi
   done < /tmp/a.txt
 done
 
