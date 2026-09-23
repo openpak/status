@@ -21,7 +21,7 @@ permissions: {}
 
 jobs:
   clean:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, podman]
     steps:
       - uses: actions/checkout@v4
       - env:
