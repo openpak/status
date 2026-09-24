@@ -6,6 +6,11 @@ of truth; this file is the readable summary.
 ## Unreleased
 
 - Go 1.26, the house version [71d1b3f]
+- gatus: watch the Stardew and Wonder session ports on the origin IP [38c257f]
+- housekeeping: daily org-wide cleanup keeping the newest 4 artifact runs and image versions
+  [288a9c1]; artifacts older than 3 days deleted, and the job can check out this repo
+  [a626ede]
+- ci: housekeeping on self-hosted runners; build scratch in the workspace, not `/tmp`
 
 
 ## v0.1.0 — 2026-09-09
