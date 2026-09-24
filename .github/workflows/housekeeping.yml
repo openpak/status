@@ -28,6 +28,12 @@ jobs:
     runs-on: [self-hosted, linux, podman]
     steps:
       - uses: actions/checkout@v4
+      - name: Scratch in the workspace, not the runner's shared /tmp
+        # /tmp is a RAM disk every build on the machine shares; when it filled on
+        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.tmp"
+          echo "TMPDIR=$GITHUB_WORKSPACE/.tmp" >> "$GITHUB_ENV"
       - env:
           GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
           KEEP: '4'
@@ -36,3 +42,6 @@ jobs:
         run: |
           [ -n "$GH_TOKEN" ] || { echo "HOUSEKEEPING_TOKEN is not set"; exit 1; }
           ./scripts/housekeeping.sh
+      - name: Clear scratch
+        if: always()
+        run: rm -rf "$GITHUB_WORKSPACE/.tmp"
