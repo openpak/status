@@ -47,6 +47,23 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  # The services behind the site. They listen only on the deploy host, so the
+  # website answers for them: /healthz/<service> runs the service's own health
+  # check and says up (200) or down (503).
+  - name: Cloud saves
+    group: Public
+    url: https://openpak.org/healthz/saves
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Messages
+    group: Public
+    url: https://openpak.org/healthz/chat
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   # ---- What a console uses ----
   # These names are Nintendo's. The container maps them to the origin IP, so
   # the check reaches our adapter exactly as a console does. TLS verification
