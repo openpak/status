@@ -147,3 +147,10 @@ endpoints:
     interval: 60s
     conditions:
       - "[CONNECTED] == true"
+
+  - name: Terraria session port
+    group: Console
+    url: tcp://145.241.199.19:24540
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
