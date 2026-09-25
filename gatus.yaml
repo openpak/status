@@ -163,3 +163,17 @@ endpoints:
     interval: 60s
     conditions:
       - "[CONNECTED] == true"
+
+  - name: Risk of Rain secure port
+    group: Console
+    url: tcp://145.241.199.19:22891
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Risk of Rain Returns secure port
+    group: Console
+    url: tcp://145.241.199.19:23001
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
