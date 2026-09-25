@@ -154,3 +154,12 @@ endpoints:
     interval: 60s
     conditions:
       - "[CONNECTED] == true"
+
+  # A NEX title's secure port is dialled straight from the station URL its login
+  # hands out, the same way a joiner dials an NPLN session port.
+  - name: Streets of Rage 4 secure port
+    group: Console
+    url: tcp://145.241.199.19:22881
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
