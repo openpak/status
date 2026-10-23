@@ -28,6 +28,8 @@ signed by the OpenPak CA, which is the entire point of them.
 
 ## Deploying
 
+`<secondary-host>` is the status box's SSH login (see the private deploy notes).
+
 ```sh
 scp gatus.yaml <secondary-host>:~/openpak-status/gatus.yaml
 scp openpak-status.container <secondary-host>:~/.config/containers/systemd/
