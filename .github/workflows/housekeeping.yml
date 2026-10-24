@@ -18,22 +18,16 @@ on:
         type: boolean
         default: true
 
-# contents: read is needed for the checkout of this private repo; everything else goes through
+# contents: read is needed for the checkout of this repo; everything else goes through
 # HOUSEKEEPING_TOKEN.
 permissions:
   contents: read
 
 jobs:
   clean:
-    runs-on: [self-hosted, linux, podman]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - name: Scratch in the runner's temp, not the machine's shared /tmp
-        # /tmp is a RAM disk every build on the machine shares; when it filled on
-        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
-        run: |
-          mkdir -p "$RUNNER_TEMP/scratch"
-          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
       - env:
           GH_TOKEN: ${{ secrets.HOUSEKEEPING_TOKEN }}
           KEEP: '4'
@@ -42,6 +36,3 @@ jobs:
         run: |
           [ -n "$GH_TOKEN" ] || { echo "HOUSEKEEPING_TOKEN is not set"; exit 1; }
           ./scripts/housekeeping.sh
-      - name: Clear scratch
-        if: always()
-        run: rm -rf "$RUNNER_TEMP/scratch"
