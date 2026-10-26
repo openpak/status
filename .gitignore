@@ -1,2 +1,3 @@
 # Built by `go build ./cmd/statuspage`; the deployed copy is scp'd, not committed.
 /statuspage
+next-session.md
