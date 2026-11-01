@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.2
+
+- PS3 group: leaderboards, Title User Storage and XMB feed checks
+
 ## v0.1.1
 
 - Xbox 360 group: matchmaking, leaderboards and ranked-match arbitration checks

@@ -14,6 +14,9 @@
 | Xbox 360 | `/xmatch/xmatchclient2.ashx` on the origin | matchmaking (Live service 6) |
 | Xbox 360 | `/xstats/xstatread.ashx` on the origin | leaderboards (Live service 7) |
 | Xbox 360 | `/XArb/Register.ashx` on the origin | ranked-match arbitration (Live service 16) |
+| PS3 | `ranking-view.np.community.playstation.net/ranking_view/func/get_ranking` | a leaderboard read (np-score and its database) |
+| PS3 | `static-resource…/np/resource/title/<commid>/storage/…-storage.xml` | the signed Title User Storage discovery (np-tus) |
+| PS3 | `nsx.sec.np.dl.playstation.net/nsx/…/NSXWSV-PN.P3.US-WHATSNEW01.xml` | the XMB What's New feed (np-community) |
 
 The public checks go through Cloudflare on purpose, so a pass means what a
 person experiences works — not merely that a process is alive.

@@ -206,3 +206,35 @@ endpoints:
     interval: 120s
     conditions:
       - "[STATUS] == 403"
+
+  # ---- What a PS3 uses ----
+  # Probed by the firmware's own host names (mapped to the origin in the
+  # quadlet), so each check crosses Traefik and np-account to the service, the
+  # same path a console takes.
+  - name: Leaderboards
+    group: PS3
+    # A real leaderboard read: reaches np-score and its database.
+    url: http://ranking-view.np.community.playstation.net/ranking_view/func/get_ranking
+    method: POST
+    body: '<?xml version="1.0" encoding="utf-8"?><ranking platform="ps3" sv="4.93"><titleid>NPWR04270_00</titleid><board>1</board><start>1</start><list-max>1</list-max><option message="false" info="false"/></ranking>'
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*result=\"00\"*)"
+
+  - name: Title User Storage
+    group: PS3
+    url: http://static-resource.np.community.playstation.net/np/resource/title/NPWR04270_00/storage/NPWR04270_00-storage.xml
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*status=\"alive\"*)"
+
+  - name: XMB feeds
+    group: PS3
+    # Plain HTTP: the console fetches this over TLS, but the PS3 front offers only
+    # ciphers Go's client refuses, so a TLS probe here fails while consoles work.
+    url: http://nsx.sec.np.dl.playstation.net/nsx/sec/Xz78TMQ1Uf31VCYr/c/NSXWSV/NSXWSV-PN.P3.US-WHATSNEW01.xml
+    interval: 300s
+    conditions:
+      - "[STATUS] == 200"

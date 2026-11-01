@@ -61,6 +61,9 @@ var blurb = map[string]string{
 	"console_account-service":  "How a console proves who you are. Sign-in and friends on the console depend on it.",
 	"console_sign-in-page":     "The sign-in screen a console shows while linking an account.",
 	"console_licence-service":  "Checked while a console adds an account. If it fails, adding an account stops part-way.",
+	"ps3_leaderboards":         "Posting scores and reading leaderboards in PS3 games.",
+	"ps3_title-user-storage":   "Data a PS3 game keeps on the network for each player.",
+	"ps3_xmb-feeds":            "What's New and the game and video billboards on the PS3 home screen.",
 }
 
 // Human names for the groups, and the order they read in.
@@ -68,6 +71,7 @@ var groups = []struct{ Key, Title, Note string }{
 	{"Public", "On the web", "What you use in a browser or on your phone."},
 	{"Console", "On a console", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
 	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
+	{"PS3", "On a PS3", "PlayStation Network services a PS3 reaches, checked by the console's own host names."},
 }
 
 type service struct {
