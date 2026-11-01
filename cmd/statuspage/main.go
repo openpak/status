@@ -67,6 +67,7 @@ var blurb = map[string]string{
 var groups = []struct{ Key, Title, Note string }{
 	{"Public", "On the web", "What you use in a browser or on your phone."},
 	{"Console", "On a console", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
+	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
 }
 
 type service struct {

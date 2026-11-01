@@ -177,3 +177,32 @@ endpoints:
     interval: 60s
     conditions:
       - "[CONNECTED] == true"
+
+  # ---- What an Xbox 360 uses ----
+  # The gateway forwards Live services to the primary's Traefik with a key that
+  # only it holds. Without it every service refuses with 403 before it reads the
+  # request, so 403 means "routed and running": a missing route is 404 and a
+  # stopped container 502.
+  - name: Matchmaking
+    group: Xbox 360
+    url: http://145.241.199.19/xmatch/xmatchclient2.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"
+
+  - name: Leaderboards
+    group: Xbox 360
+    url: http://145.241.199.19/xstats/xstatread.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"
+
+  - name: Ranked match arbitration
+    group: Xbox 360
+    url: http://145.241.199.19/XArb/Register.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"

@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.1
+
+- Xbox 360 group: matchmaking, leaderboards and ranked-match arbitration checks
+
 ## Unreleased
 
 - Go 1.26, the house version [71d1b3f]
