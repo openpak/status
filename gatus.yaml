@@ -180,9 +180,72 @@ endpoints:
 
   # ---- What an Xbox 360 uses ----
   # The gateway forwards Live services to the primary's Traefik with a key that
-  # only it holds. Without it every service refuses with 403 before it reads the
-  # request, so 403 means "routed and running": a missing route is 404 and a
-  # stopped container 502.
+  # only it holds. Without it the identity headers are dropped, so a service that
+  # needs them refuses with 403 and the rest answer an empty request their own
+  # way (each check says which). Either answer means "routed and running": a
+  # missing route is 404 and a stopped container 502.
+  - name: Accounts and profile recovery
+    group: Xbox 360
+    # An empty 0x645 request: x360-xuacs answers "malformed request".
+    url: http://145.241.199.19/xuacs/PassportMemberNameExists.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 400"
+
+  - name: Presence and friends
+    group: Xbox 360
+    url: http://145.241.199.19/xpnfront/xpresence.srf
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"
+
+  - name: Profile text check
+    group: Xbox 360
+    # An empty XStringVerify: x360-msgserver answers "short request".
+    url: http://145.241.199.19/msgserver/vetstring2.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 400"
+
+  - name: Country information
+    group: Xbox 360
+    url: http://145.241.199.19/xedl/ProfileInfo/103/CountryInfo.cib
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) == 128"
+
+  - name: Certificate validation
+    group: Xbox 360
+    # Answers only once x360-xsig has the WLID CA from x360-xuacs (503 before),
+    # so this also watches that link; sign-in fails without it.
+    url: http://145.241.199.19/xsig/ValidateCertificate.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) == 12"
+
+  - name: Revocation list
+    group: Xbox 360
+    url: http://145.241.199.19/xbos/GetRevocationList.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) == 276"
+
+  - name: Profile settings
+    group: Xbox 360
+    url: http://145.241.199.19/xstats/readsettings.ashx
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"
+
   - name: Matchmaking
     group: Xbox 360
     url: http://145.241.199.19/xmatch/xmatchclient2.ashx
