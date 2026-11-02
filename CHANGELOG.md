@@ -3,11 +3,14 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.9
+
+- PS3 game update checks and message attachments: page blurbs and the status container's host entries
+  (the checks themselves landed in v0.1.8)
+
 ## v0.1.8
 
 - PS3 group: game update checks (np-update) and message attachments (np-uploader)
-
-## v0.1.8
 
 - Xbox 360 group: Messages check (Live service 18)
 

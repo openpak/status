@@ -69,6 +69,8 @@ var blurb = map[string]string{
 	"ps3_profiles":             "Your name and avatar as other PS3 players see them.",
 	"ps3_friends":              "Your PS3 friends list.",
 	"ps3_presence":             "Seeing which PS3 friends are online and what they are playing.",
+	"ps3_game-update-checks":   "Checking for game updates when a PS3 game starts.",
+	"ps3_message-attachments":  "Files attached to PS3 messages between friends.",
 }
 
 // Human names for the groups, and the order they read in.

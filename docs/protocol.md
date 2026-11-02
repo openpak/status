@@ -27,6 +27,8 @@
 | PS3 | `auth.np.ac.playstation.net/2.0/oauth/token` | sign-in: np-account's OAuth handler answering an empty request |
 | PS3 | `getprof.us.np.community.playstation.net/basic_view/func/get_profile` | profiles: np-community's handler rejecting a malformed JID |
 | PS3 | `145.241.199.19:5223` (TCP) | friends and presence: the np-community XMPP stream accepts connections |
+| PS3 | `a0.ww.np.dl.playstation.net/tpl/np/<title>/<title>-ver.xml` | game update checks: np-update's empty "no update" 404 |
+| PS3 | `uploader.np.community.playstation.net/uploader/sec/download_data` | message attachments: np-uploader rejecting a junk ticket (result 02) |
 | Original Xbox | `145.241.228.207:3074` (UDP), `88/udp` on the primary | gateway and Kerberos KDC accept datagrams |
 | Original Xbox | `macs.xboxlive.com` A query to xb-dns on the primary ZeroTier address | discovery DNS answers with the auth host |
 | Original Xbox | `10.212.63.196:26111/26112/26115/26117` (TCP) | accounts, terms, friends and presence, voice: mutual-TLS APIs accept connections from the status host |
