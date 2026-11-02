@@ -410,6 +410,17 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == pat(*result=\"02\"*)"
 
+  # ---- What a PS4 uses ----
+  - name: System update checks
+    group: PS4
+    # ps4-update answers "nothing newer" (version 00.000.000, no image), so a
+    # body carrying that version proves the request reached ps4-update.
+    url: http://dus01.ps4.update.playstation.net/update/ps4/list/us/ps4-updatelist.xml
+    interval: 300s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*00.000.000*)"
+
   # ---- What an original Xbox uses ----
   # xb-auth (88/udp) is generated below. The private APIs bind the primary's
   # ZeroTier address and are mutual-TLS, so a TCP connect from the status host

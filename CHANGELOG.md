@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.13
+
+- PS4 group with a system update checks probe (ps4-update's "nothing newer" list via dus01.ps4.update.playstation.net).
+
 ## v0.1.12
 
 - Rankings API check matches the `games` key.

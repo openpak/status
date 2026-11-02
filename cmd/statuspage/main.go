@@ -71,6 +71,7 @@ var blurb = map[string]string{
 	"ps3_presence":             "Seeing which PS3 friends are online and what they are playing.",
 	"ps3_game-update-checks":   "Checking for game updates when a PS3 game starts.",
 	"ps3_message-attachments":  "Files attached to PS3 messages between friends.",
+	"ps4_system-update-checks": "Checking for system software updates when a PS4 starts. OpenPak answers that nothing is newer, so consoles stay on their current firmware.",
 }
 
 // Human names for the groups, and the order they read in.
@@ -79,6 +80,7 @@ var groups = []struct{ Key, Title, Note string }{
 	{"Console", "On a console", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
 	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
 	{"PS3", "On a PS3", "PlayStation Network services a PS3 reaches, checked by the console's own host names."},
+	{"PS4", "On a PS4", "PlayStation Network services a PS4 reaches, checked by the console's own host names."},
 	{"Original Xbox", "On an original Xbox", "Sign-in, friends, accounts and voice for the original Xbox, checked from the status host."},
 }
 
