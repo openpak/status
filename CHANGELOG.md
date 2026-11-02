@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.12
+
+- Rankings API check matches the `games` key.
+
 ## v0.1.11
 
 - Checks for the rankings hub (`/rankings`) and the public rankings API (`/api/v1/rankings`).
