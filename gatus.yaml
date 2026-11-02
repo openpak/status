@@ -213,6 +213,14 @@ endpoints:
     conditions:
       - "[STATUS] == 403"
 
+  - name: Messages
+    group: Xbox 360
+    url: http://145.241.199.19/xpnfront/xmessaging.srf
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 403"
+
   - name: Profile text check
     group: Xbox 360
     # An empty XStringVerify: x360-msgserver answers "short request".
@@ -352,6 +360,27 @@ endpoints:
     interval: 120s
     conditions:
       - "[CONNECTED] == true"
+
+  - name: Game update checks
+    group: PS3
+    # np-update answers "no update" as an empty 404; np-account's own 404 has a body,
+    # so an empty body proves the request reached np-update.
+    url: http://a0.ww.np.dl.playstation.net/tpl/np/BLES01938/BLES01938-ver.xml
+    interval: 300s
+    conditions:
+      - "[STATUS] == 404"
+      - "len([BODY]) == 0"
+
+  - name: Message attachments
+    group: PS3
+    # A download with a junk ticket: np-uploader rejects it with result 02.
+    url: http://uploader.np.community.playstation.net/uploader/sec/download_data
+    method: POST
+    body: '<?xml version="1.0" encoding="utf-8"?><uploader><ticket>AAAA</ticket></uploader>'
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*result=\"02\"*)"
 
   # ---- What an original Xbox uses ----
   # xb-auth (88/udp) is generated below. The private APIs bind the primary's
