@@ -32,7 +32,7 @@
 | PS4 | `dus01.ps4.update.playstation.net/update/ps4/list/us/ps4-updatelist.xml` | system update checks: ps4-update's "nothing newer" list (version 00.000.000) |
 | Original Xbox | `145.241.228.207:3074` (UDP), `88/udp` on the primary | gateway and Kerberos KDC accept datagrams |
 | Original Xbox | `macs.xboxlive.com` A query to xb-dns on the primary ZeroTier address | discovery DNS answers with the auth host |
-| Original Xbox | `10.212.63.196:26111/26112/26115/26117` (TCP) | accounts, terms, friends and presence, voice: mutual-TLS APIs accept connections from the status host |
+| Original Xbox | `10.212.63.196:26111/26112/26115/26117/26118/26119/26120` (TCP) | accounts, terms, friends and presence, voice, signing keys, system messages, messages: mutual-TLS APIs accept connections from the status host |
 
 The public checks go through Cloudflare on purpose, so a pass means what a
 person experiences works — not merely that a process is alive.

@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.14
+
+- Original Xbox group: Signing keys, System messages and Messages checks (xb-xsig, xb-msgserver, xb-xmessaging)
+
 ## v0.1.13
 
 - PS4 group with a system update checks probe (ps4-update's "nothing newer" list via dus01.ps4.update.playstation.net).
