@@ -42,3 +42,7 @@ ssh <secondary-host> 'systemctl --user daemon-reload && systemctl --user restart
 
 A plain binary and a systemd user unit rather than a container: the deploy host
 cannot reach Docker Hub, and this needs nothing an image would provide.
+
+## Placement
+
+The status page runs on Draughts, deliberately not on the production box: a status page on the machine it watches reports "up" right until it cannot report at all. Gatus does the monitoring and stays private; `cmd/statuspage` renders what it found.

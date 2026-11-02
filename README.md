@@ -32,7 +32,7 @@ production quadlets (a copy of `~/.config/containers/systemd/` from the primary 
 
 ```sh
 go run ./cmd/gen-gatus -quadlets DIR -exclude openpak-nx-baas   # rewrites the block marked "generated" in gatus.yaml
-go run ./cmd/gen-ports -quadlets DIR > ../../../../docs/docs/self-hosting/ports.md
+go run ./cmd/gen-ports -quadlets DIR > ../../../../docs/docs/contributors/ports.md
 ```
 
 `nx-baas` is excluded because its port 21080 is blocked by the cloud firewall (the Public group already covers it). A port bound to a specific address (loopback, ZeroTier) counts as internal and is not probed. Hand-written endpoints are never touched; re-running replaces only the generated block.
@@ -40,10 +40,9 @@ go run ./cmd/gen-ports -quadlets DIR > ../../../../docs/docs/self-hosting/ports.
 ## Docs
 
 - [Protocol](docs/protocol.md)
-- [Evidence](docs/evidence.md)
 - [Deploy](docs/deploy.md)
-- [Notes](docs/notes.md)
-- [Docs index](docs/README.md)
+
+PRDs: openpak/prds (private)
 
 ## Licence
 
