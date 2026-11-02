@@ -77,6 +77,7 @@ var groups = []struct{ Key, Title, Note string }{
 	{"Console", "On a console", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
 	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
 	{"PS3", "On a PS3", "PlayStation Network services a PS3 reaches, checked by the console's own host names."},
+	{"Original Xbox", "On an original Xbox", "Sign-in, friends, accounts and voice for the original Xbox, checked from the status host."},
 }
 
 type service struct {

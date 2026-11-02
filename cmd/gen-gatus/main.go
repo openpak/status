@@ -23,7 +23,7 @@ const (
 )
 
 var groupOrder = []string{"Core", "Switch infra", "Switch NEX", "Switch NPLN", "Switch vendor",
-	"Wii U/3DS", "Wii/DS", "PS3", "Xbox 360", "Xbox", "Infra"}
+	"Wii U/3DS", "Wii/DS", "PS3", "Xbox 360", "Original Xbox", "Infra"}
 
 var notServices = map[string]string{
 	"openpak-switch-bridge":   "loopback bridge, not a service",
@@ -67,7 +67,7 @@ func platform(u quadlet.Unit) string {
 	case strings.HasPrefix(s, "x360-"):
 		return "Xbox 360"
 	case strings.HasPrefix(s, "xb-"), s == "xbl":
-		return "Xbox"
+		return "Original Xbox"
 	case infraUnits[s]:
 		return "Infra"
 	}

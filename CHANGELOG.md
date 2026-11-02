@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.6
+
+- Original Xbox group: gateway, discovery DNS, accounts, terms, friends and voice checks; generated xb-auth moved into it
+
 ## v0.1.5
 
 - Xbox 360 group: Console DNS check (x360-dns)
