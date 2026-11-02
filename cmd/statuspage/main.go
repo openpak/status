@@ -65,6 +65,10 @@ var blurb = map[string]string{
 	"ps3_leaderboards":         "Posting scores and reading leaderboards in PS3 games.",
 	"ps3_title-user-storage":   "Data a PS3 game keeps on the network for each player.",
 	"ps3_xmb-feeds":            "What's New and the game and video billboards on the PS3 home screen.",
+	"ps3_sign-in":              "Signing a PS3 in to the network.",
+	"ps3_profiles":             "Your name and avatar as other PS3 players see them.",
+	"ps3_friends":              "Your PS3 friends list.",
+	"ps3_presence":             "Seeing which PS3 friends are online and what they are playing.",
 }
 
 // Human names for the groups, and the order they read in.

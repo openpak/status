@@ -24,6 +24,9 @@
 | PS3 | `ranking-view.np.community.playstation.net/ranking_view/func/get_ranking` | a leaderboard read (np-score and its database) |
 | PS3 | `static-resource…/np/resource/title/<commid>/storage/…-storage.xml` | the signed Title User Storage discovery (np-tus) |
 | PS3 | `nsx.sec.np.dl.playstation.net/nsx/…/NSXWSV-PN.P3.US-WHATSNEW01.xml` | the XMB What's New feed (np-community) |
+| PS3 | `auth.np.ac.playstation.net/2.0/oauth/token` | sign-in: np-account's OAuth handler answering an empty request |
+| PS3 | `getprof.us.np.community.playstation.net/basic_view/func/get_profile` | profiles: np-community's handler rejecting a malformed JID |
+| PS3 | `145.241.199.19:5223` (TCP) | friends and presence: the np-community XMPP stream accepts connections |
 
 The public checks go through Cloudflare on purpose, so a pass means what a
 person experiences works — not merely that a process is alive.
