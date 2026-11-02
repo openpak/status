@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.11
+
+- Checks for the rankings hub (`/rankings`) and the public rankings API (`/api/v1/rankings`).
+
 ## v0.1.10
 
 - Xbox 360 check "Online dashboard modules" (x360-som manifest).

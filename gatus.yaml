@@ -31,6 +31,23 @@ endpoints:
       - "[STATUS] == 200"
       - "[RESPONSE_TIME] < 3000"
 
+  - name: Rankings
+    group: Public
+    # The rankings hub, and the public API behind it (valid JSON with a games list, even when empty).
+    url: https://openpak.org/rankings
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 3000"
+
+  - name: Rankings API
+    group: Public
+    url: https://openpak.org/api/v1/rankings
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].games == any(*)"
+
   - name: Accounts
     group: Public
     url: https://account.openpak.org/healthz
