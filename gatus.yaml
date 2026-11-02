@@ -290,6 +290,17 @@ endpoints:
     conditions:
       - "[STATUS] == 403"
 
+  - name: Online dashboard modules
+    group: Xbox 360
+    # x360-som: the signed system.online.manifest XAM fetches from UpdateUriRoot1, by the content host name.
+    url: http://145.241.199.19/fffe07d1/manifests/0/system.online.manifest
+    headers:
+      Host: content.xboxlive.com
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(XMNP*)"
+
   # ---- What a PS3 uses ----
   # Probed by the firmware's own host names (mapped to the origin in the
   # quadlet), so each check crosses Traefik and np-account to the service, the

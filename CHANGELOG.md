@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.10
+
+- Xbox 360 check "Online dashboard modules" (x360-som manifest).
+
 ## v0.1.9
 
 - PS3 game update checks and message attachments: page blurbs and the status container's host entries
