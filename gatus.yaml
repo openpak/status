@@ -184,6 +184,18 @@ endpoints:
   # needs them refuses with 403 and the rest answer an empty request their own
   # way (each check says which). Either answer means "routed and running": a
   # missing route is 404 and a stopped container 502.
+  - name: Console DNS
+    group: Xbox 360
+    # x360-dns on the secondary: Xbox Live names resolve to the OpenPak boxes.
+    url: 145.241.228.207
+    dns:
+      query-name: xemacs.xboxlive.com
+      query-type: A
+    interval: 120s
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+      - "[BODY] == 145.241.228.207"
+
   - name: Accounts and profile recovery
     group: Xbox 360
     # An empty 0x645 request: x360-xuacs answers "malformed request".

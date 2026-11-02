@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.5
+
+- Xbox 360 group: Console DNS check (x360-dns)
+
 ## v0.1.4
 
 - PS3 group: sign-in, profiles, friends and presence checks
