@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.7
+
+- Gateway check renamed so the page shows it
+
 ## v0.1.6
 
 - Original Xbox group: gateway, discovery DNS, accounts, terms, friends and voice checks; generated xb-auth moved into it
