@@ -25,6 +25,18 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o statuspage ./cmd/statuspage
 
 Ports and the deploy steps are in [Deploy](docs/deploy.md).
 
+## Regenerating
+
+The generated part of `gatus.yaml` and the public ports table both come from the
+production quadlets (a copy of `~/.config/containers/systemd/` from the primary box):
+
+```sh
+go run ./cmd/gen-gatus -quadlets DIR      # rewrites the block marked "generated" in gatus.yaml
+go run ./cmd/gen-ports -quadlets DIR > ../../../../docs/docs/self-hosting/ports.md
+```
+
+Hand-written endpoints are never touched; re-running replaces only the generated block.
+
 ## Docs
 
 - [Protocol](docs/protocol.md)

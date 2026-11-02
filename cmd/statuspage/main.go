@@ -16,6 +16,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -238,11 +239,16 @@ func fetchRegions(client *http.Client) []region {
 // few enough to stay legible on a phone.
 const barCount = 40
 
+// generatedName matches the endpoints cmd/gen-gatus adds ("wfc-gpcm 29900/tcp").
+// They are for operators on the Gatus dashboard; the public page lists only the
+// hand-written checks, so a flapping UDP port cannot change the headline.
+var generatedName = regexp.MustCompile(` \d+/(tcp|udp)$`)
+
 func build(eps []gatusEndpoint) *pageView {
 	byGroup := map[string][]service{}
 	var down, total int
 	for _, e := range eps {
-		if len(e.Results) == 0 {
+		if len(e.Results) == 0 || generatedName.MatchString(e.Name) {
 			continue
 		}
 		last := e.Results[len(e.Results)-1]
