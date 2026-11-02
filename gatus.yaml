@@ -46,7 +46,7 @@ endpoints:
     interval: 60s
     conditions:
       - "[STATUS] == 200"
-      - "[BODY].games == any(*)"
+      - "[BODY] == pat(*\"games\"*)"
 
   - name: Accounts
     group: Public
