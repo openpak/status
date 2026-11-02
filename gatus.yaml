@@ -307,14 +307,6 @@ endpoints:
 # Switch NEX titles are probed on their secure port. Loopback-only ports cannot
 # be reached from this host and are not checked.
 
-  # ---- generated: Switch infra ----
-  - name: nx-baas 21080/tcp
-    group: Switch infra
-    url: tcp://145.241.199.19:21080
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-
   # ---- generated: Switch NEX ----
   - name: switch-animal-crossing-new-horizons secure 22181/tcp
     group: Switch NEX
@@ -963,58 +955,20 @@ endpoints:
     conditions:
       - "[CONNECTED] == true"
 
-  # ---- generated: Xbox 360 ----
-  - name: x360-xuacs 20005/tcp
-    group: Xbox 360
-    url: tcp://145.241.199.19:20005
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-
   # ---- generated: Xbox ----
-  - name: xb-account 26111/tcp
-    group: Xbox
-    url: tcp://145.241.199.19:26111
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
   - name: xb-auth 88/udp
     group: Xbox
     url: udp://145.241.199.19:88
     interval: 120s
     conditions:
       - "[CONNECTED] == true"
-  - name: xb-enroll 26114/tcp
-    group: Xbox
-    url: tcp://145.241.199.19:26114
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-  - name: xb-social 26115/tcp
-    group: Xbox
-    url: tcp://145.241.199.19:26115
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-  - name: xb-tou 26112/tcp
-    group: Xbox
-    url: tcp://145.241.199.19:26112
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-  - name: xb-voice 26117/tcp
-    group: Xbox
-    url: tcp://145.241.199.19:26117
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
 
 # Not externally probeable (skipped):
-#   account (only 127.0.0.1 ports)
+#   account (only ports bound to a specific address)
 #   astroneer (no published port)
-#   battlenet (only 127.0.0.1 ports)
-#   bcat (only 127.0.0.1 ports)
-#   chat (only 127.0.0.1 ports)
+#   battlenet (only ports bound to a specific address)
+#   bcat (only ports bound to a specific address)
+#   chat (only ports bound to a specific address)
 #   connectivity (host network, ports not declared)
 #   demonware (host network, ports not declared)
 #   edge (public TCP relay to Traefik, covered by the Console checks)
@@ -1022,18 +976,18 @@ endpoints:
 #   fall-guys (no published port)
 #   judd (no published port)
 #   klei (no published port)
-#   mailpit (only 127.0.0.1 ports)
-#   mario-maker (only 127.0.0.1 ports)
+#   mailpit (only ports bound to a specific address)
+#   mario-maker (only ports bound to a specific address)
 #   minecraft-dungeons (no published port)
 #   minio (no published port)
-#   mktv (only 127.0.0.1 ports)
-#   mods (only 127.0.0.1 ports)
+#   mktv (only ports bound to a specific address)
+#   mods (only ports bound to a specific address)
 #   mongo (no published port)
 #   news-experiment (no published port)
 #   nn-account (no published port)
 #   nn-boss (no published port)
 #   nn-juxtaposition-api (no published port)
-#   nn-juxtaposition-ui (only 127.0.0.1 ports)
+#   nn-juxtaposition-ui (only ports bound to a specific address)
 #   nn-nncs (host network, ports not declared)
 #   nn-soap (no published port)
 #   nn-sssl-dns (host network, ports not declared)
@@ -1041,26 +995,27 @@ endpoints:
 #   np-score (no published port)
 #   np-trophy (no published port)
 #   np-tus (no published port)
+#   nx-baas (excluded with -exclude)
 #   nx-bcat (no published port)
 #   nx-pctl (no published port)
 #   nx-penne (no published port)
 #   nx-share (no published port)
 #   nx-shop (no published port)
-#   pakka (only 127.0.0.1 ports)
+#   pakka (only ports bound to a specific address)
 #   parental (no published port)
 #   pikmin-3-histgrm (no published port)
 #   pokemon-global-link (no published port)
-#   pokemon-home (only 127.0.0.1 ports)
+#   pokemon-home (only ports bound to a specific address)
 #   pokemon-legality (no published port)
 #   postgres (no published port)
 #   qw-cloudflared (host network, ports not declared)
 #   redis (no published port)
-#   registry (only 127.0.0.1 ports)
-#   rewards (only 127.0.0.1 ports)
+#   registry (only ports bound to a specific address)
+#   rewards (only ports bound to a specific address)
 #   rotationator (no published port)
-#   saves (only 127.0.0.1 ports)
+#   saves (only ports bound to a specific address)
 #   shiro (no published port)
-#   splatnet (only 127.0.0.1 ports)
+#   splatnet (only ports bound to a specific address)
 #   stardew (already checked by hand: tcp://145.241.199.19:22200)
 #   stumble-guys (no published port)
 #   switch-bridge (loopback bridge, not a service)
@@ -1070,11 +1025,11 @@ endpoints:
 #   switch-streets-of-rage-4 (already checked by hand: tcp://145.241.199.19:22881)
 #   t17 (no published port)
 #   terraria (already checked by hand: tcp://145.241.199.19:24540)
-#   traefik (only 127.0.0.1 ports)
+#   traefik (only ports bound to a specific address)
 #   turn (host network, ports not declared)
 #   unrailed (no published port)
-#   voice (only 127.0.0.1 ports)
-#   website (only 127.0.0.1 ports)
+#   voice (only ports bound to a specific address)
+#   website (only ports bound to a specific address)
 #   wfc-api (no published port)
 #   wfc-dls (no published port)
 #   wfc-nas (no published port)
@@ -1096,6 +1051,12 @@ endpoints:
 #   x360-xsig (no published port)
 #   x360-xstats (no published port)
 #   x360-xsts (no published port)
+#   x360-xuacs (only ports bound to a specific address)
+#   xb-account (only ports bound to a specific address)
 #   xb-dns (host network, ports not declared)
+#   xb-enroll (only ports bound to a specific address)
+#   xb-social (only ports bound to a specific address)
+#   xb-tou (only ports bound to a specific address)
+#   xb-voice (only ports bound to a specific address)
 #   xbl (no published port)
 # <<< end generated

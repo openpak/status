@@ -19,7 +19,9 @@ type Port struct {
 }
 
 // External reports whether the port can be reached from another machine.
-func (p Port) External() bool { return p.IP != "127.0.0.1" && p.IP != "::1" }
+// Only ports bound to all addresses count; one bound to a specific address
+// (loopback, ZeroTier, a private NIC) is not reachable from the public internet.
+func (p Port) External() bool { return p.IP == "" || p.IP == "[::]" || p.IP == "::" }
 
 // Unit is one parsed .container file.
 type Unit struct {

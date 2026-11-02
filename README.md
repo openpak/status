@@ -31,11 +31,11 @@ The generated part of `gatus.yaml` and the public ports table both come from the
 production quadlets (a copy of `~/.config/containers/systemd/` from the primary box):
 
 ```sh
-go run ./cmd/gen-gatus -quadlets DIR      # rewrites the block marked "generated" in gatus.yaml
+go run ./cmd/gen-gatus -quadlets DIR -exclude openpak-nx-baas   # rewrites the block marked "generated" in gatus.yaml
 go run ./cmd/gen-ports -quadlets DIR > ../../../../docs/docs/self-hosting/ports.md
 ```
 
-Hand-written endpoints are never touched; re-running replaces only the generated block.
+`nx-baas` is excluded because its port 21080 is blocked by the cloud firewall (the Public group already covers it). A port bound to a specific address (loopback, ZeroTier) counts as internal and is not probed. Hand-written endpoints are never touched; re-running replaces only the generated block.
 
 ## Docs
 

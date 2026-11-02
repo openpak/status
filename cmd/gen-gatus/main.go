@@ -2,7 +2,7 @@
 // port to the hand-written gatus.yaml. The generated part sits between two
 // marker comments and is replaced wholesale on every run.
 //
-//	go run ./cmd/gen-gatus -quadlets DIR [-in gatus.yaml] [-out gatus.yaml]
+//	go run ./cmd/gen-gatus -quadlets DIR [-exclude unit,unit] [-in gatus.yaml] [-out gatus.yaml]
 package main
 
 import (
@@ -99,7 +99,14 @@ func main() {
 	dir := flag.String("quadlets", "", "directory of production *.container files")
 	in := flag.String("in", "gatus.yaml", "existing gatus.yaml")
 	out := flag.String("out", "", "output file (default: same as -in)")
+	exclude := flag.String("exclude", "", "comma-separated units to leave out (e.g. openpak-nx-baas)")
 	flag.Parse()
+	excluded := map[string]bool{}
+	for _, x := range strings.Split(*exclude, ",") {
+		if x = strings.TrimSpace(x); x != "" {
+			excluded[strings.TrimPrefix(x, "openpak-")] = true
+		}
+	}
 	if *dir == "" {
 		fmt.Fprintln(os.Stderr, "usage: gen-gatus -quadlets DIR [-in gatus.yaml] [-out gatus.yaml]")
 		os.Exit(2)
@@ -130,11 +137,15 @@ func main() {
 			skipped = append(skipped, u.Short+" ("+why+")")
 			continue
 		}
+		if excluded[u.Short] {
+			skipped = append(skipped, u.Short+" (excluded with -exclude)")
+			continue
+		}
 		url, label, ok := choose(u)
 		if !ok {
 			why := "no published port"
 			if len(u.Published) > 0 {
-				why = "only 127.0.0.1 ports"
+				why = "only ports bound to a specific address"
 			} else if u.HostNetwork {
 				why = "host network, ports not declared"
 			}
