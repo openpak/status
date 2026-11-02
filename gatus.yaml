@@ -358,7 +358,7 @@ endpoints:
   # ZeroTier address and are mutual-TLS, so a TCP connect from the status host
   # (also on ZeroTier) is the deepest probe it can make. xb-enroll is not probed:
   # its port is firewalled to the dev machine only.
-  - name: Gateway 3074/udp
+  - name: Gateway
     group: Original Xbox
     url: udp://145.241.228.207:3074
     interval: 120s
