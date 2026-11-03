@@ -105,6 +105,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Database connections
+    group: Public
+    # Postgres client connections: the website answers 503 from 240, which is 80% of max_connections=300.
+    url: https://openpak.org/healthz/db-connections
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   # ---- What a console uses ----
   # These names are Nintendo's. The container maps them to the origin IP, so
   # the check reaches our adapter exactly as a console does. TLS verification
