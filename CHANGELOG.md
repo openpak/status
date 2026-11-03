@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.22
+
+- Public group: the Accounts check reads `https://api.openpak.org/healthz/core`; `account.openpak.org` is now the Wii U/3DS console sign-in host, not the core.
+
 ## v0.1.21
 
 - Public group: Game title storage check (`/healthz/title-storage`, the neutral title storage core behind every console's per-game player data).

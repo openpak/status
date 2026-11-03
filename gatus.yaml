@@ -50,7 +50,7 @@ endpoints:
 
   - name: Accounts
     group: Public
-    url: https://account.openpak.org/healthz
+    url: https://api.openpak.org/healthz/core
     interval: 60s
     conditions:
       - "[STATUS] == 200"
