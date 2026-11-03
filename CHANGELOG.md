@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.17
+
+- Original Xbox group: Online storage, Player feedback and Auto-update referral checks (xb-stfd, xb-fbserver, xb-autoupd)
+
 ## v0.1.15
 
 - PS3 group: online save storage (np-ubs)
