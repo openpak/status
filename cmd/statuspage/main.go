@@ -58,6 +58,7 @@ var blurb = map[string]string{
 	"public_console-link-page": "The page your phone opens when you link a console.",
 	"public_cloud-saves":       "Backing up and restoring game saves from an emulator or the website.",
 	"public_messages":          "Messages between friends on the website, the phone app and Miiverse.",
+	"public_game-leaderboards": "The shared score boards every console's games post to and read from.",
 	"console_device-auth":      "The first thing a console does. If this is down, no console can reach the network at all.",
 	"console_account-service":  "How a console proves who you are. Sign-in and friends on the console depend on it.",
 	"console_sign-in-page":     "The sign-in screen a console shows while linking an account.",

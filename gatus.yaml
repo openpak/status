@@ -81,6 +81,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Game leaderboards
+    group: Public
+    # The neutral leaderboards core every console's score server stores into.
+    url: https://openpak.org/healthz/leaderboards
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   # ---- What a console uses ----
   # These names are Nintendo's. The container maps them to the origin IP, so
   # the check reaches our adapter exactly as a console does. TLS verification
@@ -324,7 +332,7 @@ endpoints:
   # same path a console takes.
   - name: Leaderboards
     group: PS3
-    # A real leaderboard read: reaches np-score and its database.
+    # A real leaderboard read: reaches np-score and, behind it, the leaderboards core.
     url: http://ranking-view.np.community.playstation.net/ranking_view/func/get_ranking
     method: POST
     body: '<?xml version="1.0" encoding="utf-8"?><ranking platform="ps3" sv="4.93"><titleid>NPWR04270_00</titleid><board>1</board><start>1</start><list-max>1</list-max><option message="false" info="false"/></ranking>'
