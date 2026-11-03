@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.15
+
+- PS3 group: online save storage (np-ubs)
+
 ## v0.1.14
 
 - Original Xbox group: Signing keys, System messages and Messages checks (xb-xsig, xb-msgserver, xb-xmessaging)
@@ -22,10 +26,6 @@ of truth; this file is the readable summary.
 ## v0.1.10
 
 - Xbox 360 check "Online dashboard modules" (x360-som manifest).
-
-## v0.1.15
-
-- PS3 group: online save storage (np-ubs)
 
 ## v0.1.9
 
