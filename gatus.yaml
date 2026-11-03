@@ -97,6 +97,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Game title storage
+    group: Public
+    # The neutral title storage core behind every console's per-game player data.
+    url: https://openpak.org/healthz/title-storage
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   # ---- What a console uses ----
   # These names are Nintendo's. The container maps them to the origin IP, so
   # the check reaches our adapter exactly as a console does. TLS verification

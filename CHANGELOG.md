@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.21
+
+- Public group: Game title storage check (`/healthz/title-storage`, the neutral title storage core behind every console's per-game player data).
+
 ## v0.1.20
 
 - PS3 group: Trophies check (trophy discovery through np-account and np-trophy).
