@@ -65,6 +65,7 @@ var blurb = map[string]string{
 	"console_sign-in-page":     "The sign-in screen a console shows while linking an account.",
 	"console_licence-service":  "Checked while a console adds an account. If it fails, adding an account stops part-way.",
 	"ps3_leaderboards":         "Posting scores and reading leaderboards in PS3 games.",
+	"ps3_trophies":             "Syncing and viewing PS3 trophies.",
 	"ps3_title-user-storage":   "Data a PS3 game keeps on the network for each player.",
 	"ps3_xmb-feeds":            "What's New and the game and video billboards on the PS3 home screen.",
 	"ps3_sign-in":              "Signing a PS3 in to the network.",

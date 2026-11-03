@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.20
+
+- PS3 group: Trophies check (trophy discovery through np-account and np-trophy).
+
 ## v0.1.19
 
 - Public group: Game achievements check (`/healthz/achievements`, the neutral achievements core behind PS3 trophies and later every console's achievements).

@@ -349,6 +349,15 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == pat(*result=\"00\"*)"
 
+  - name: Trophies
+    group: PS3
+    # Trophy discovery: reaches np-account and np-trophy, which stores through the achievements core.
+    url: http://static-resource.np.community.playstation.net/np/resource/trophy/trophy-status.xml
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*status=\"alive\"*)"
+
   - name: Title User Storage
     group: PS3
     url: http://static-resource.np.community.playstation.net/np/resource/title/NPWR04270_00/storage/NPWR04270_00-storage.xml
