@@ -23,7 +23,7 @@ of truth; this file is the readable summary.
 
 - Xbox 360 check "Online dashboard modules" (x360-som manifest).
 
-## v0.1.10
+## v0.1.15
 
 - PS3 group: online save storage (np-ubs)
 
