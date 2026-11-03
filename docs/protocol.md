@@ -29,6 +29,7 @@
 | PS3 | `145.241.199.19:5223` (TCP) | friends and presence: the np-community XMPP stream accepts connections |
 | PS3 | `a0.ww.np.dl.playstation.net/tpl/np/<title>/<title>-ver.xml` | game update checks: np-update's empty "no update" 404 |
 | PS3 | `uploader.np.community.playstation.net/uploader/sec/download_data` | message attachments: np-uploader rejecting a junk ticket (result 02) |
+| PS3 | `static-resource…/np/resource/ubstorage/ubstorage.xml` | online save storage: the signed discovery file (np-ubs) |
 | PS4 | `dus01.ps4.update.playstation.net/update/ps4/list/us/ps4-updatelist.xml` | system update checks: ps4-update's "nothing newer" list (version 00.000.000) |
 | Original Xbox | `145.241.228.207:3074` (UDP), `88/udp` on the primary | gateway and Kerberos KDC accept datagrams |
 | Original Xbox | `macs.xboxlive.com` A query to xb-dns on the primary ZeroTier address | discovery DNS answers with the auth host |

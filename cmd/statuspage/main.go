@@ -71,6 +71,7 @@ var blurb = map[string]string{
 	"ps3_presence":             "Seeing which PS3 friends are online and what they are playing.",
 	"ps3_game-update-checks":   "Checking for game updates when a PS3 game starts.",
 	"ps3_message-attachments":  "Files attached to PS3 messages between friends.",
+	"ps3_online-save-storage":  "Keeping PS3 game saves on the network.",
 	"ps4_system-update-checks": "Checking for system software updates when a PS4 starts. OpenPak answers that nothing is newer, so consoles stay on their current firmware.",
 }
 

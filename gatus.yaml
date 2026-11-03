@@ -410,6 +410,15 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == pat(*result=\"02\"*)"
 
+  - name: Online save storage
+    group: PS3
+    # The signed Online Storage discovery file (np-ubs through np-account).
+    url: http://static-resource.np.community.playstation.net/np/resource/ubstorage/ubstorage.xml
+    interval: 300s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*status=\"alive\"*)"
+
   # ---- What a PS4 uses ----
   - name: System update checks
     group: PS4

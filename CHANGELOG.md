@@ -23,6 +23,10 @@ of truth; this file is the readable summary.
 
 - Xbox 360 check "Online dashboard modules" (x360-som manifest).
 
+## v0.1.10
+
+- PS3 group: online save storage (np-ubs)
+
 ## v0.1.9
 
 - PS3 game update checks and message attachments: page blurbs and the status container's host entries
