@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.1.24
+
+- Console group: Unity sign-in and Unity lobby checks for Gang Beasts (ugs); the prober maps the two Unity names to the origin.
+
 ## v0.1.23
 
 - Public group: Database connections check (`/healthz/db-connections`, website v0.86.3): 503 once Postgres holds 240 client connections, 80% of `max_connections=300`.

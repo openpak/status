@@ -129,6 +129,29 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY].challenge != null"
 
+  - name: Unity sign-in (Gang Beasts)
+    group: Console
+    # Unity's player-auth name, answered by ugs: an anonymous sign-in returns an idToken.
+    url: https://player-auth.services.api.unity.com/v1/authentication/anonymous
+    method: POST
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].idToken != null"
+
+  - name: Unity lobby (Gang Beasts)
+    group: Console
+    # Without a token the lobby host refuses with 401: it is ugs answering.
+    url: https://lobby.services.api.unity.com/v1/lobbies/query
+    method: POST
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 401"
+
   - name: Account service
     group: Console
     # The key set the console verifies every token against: if this is wrong,
