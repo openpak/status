@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.6.2
+
+- Core check `Shop catalog` (`/healthz/shop-core`, openpak/prds#124).
+
 ## v0.6.1
 
 - Switch vendor checks for Hello Kitty Island Adventure (minsc.sunblink.io) and Plants vs. Zombies (accounts.ea.com, plus the generated 42230/tcp probe); both names added to the status box's host overrides.

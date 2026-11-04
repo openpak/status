@@ -97,6 +97,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Shop catalog
+    group: Core
+    # The neutral shop catalog core behind every console's shop (Switch mirrored, Wii U native).
+    url: https://openpak.org/healthz/shop-core
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   - name: Game title storage
     group: Core
     # The neutral title storage core behind every console's per-game player data.

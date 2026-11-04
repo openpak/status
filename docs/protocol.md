@@ -44,7 +44,7 @@ API, so the two never disagree about what exists.
 |---|---|
 | On the web | the site's pages and public APIs (sign-in, registration, titles, downloads, help, app API, network profile, redirect ceiling, CA, news feed, regions, the logs viewer gate) |
 | Companion sites | verse, verse Lite, kart, splat, maker, rewards, docs |
-| Core services | accounts, saves, messages, leaderboards, achievements, title storage, database load, registry, rewards, parental, voice, mods, Pokemon HOME / Global Link / legality, Pakka, the logs pipeline, console DNS (a DNS query for an OpenPak name only), the four NAT check ports, the TURN relay |
+| Core services | accounts, saves, messages, leaderboards, achievements, title storage, shop catalog, database load, registry, rewards, parental, voice, mods, Pokemon HOME / Global Link / legality, Pakka, the logs pipeline, console DNS (a DNS query for an OpenPak name only), the four NAT check ports, the TURN relay |
 | On a Switch | the services behind the Nintendo names (device auth, account, shop, penne, pctl, BCAT, share) |
 | Switch games (NEX / NPLN) | one session port per title, generated from the quadlets |
 | Switch games with their own servers | Epic, Innersloth, Klei, Team17, Demonware, Battle.net, Stumble Guys, Fall Guys, Photon, Unity (ugs), PlayFab, Minecraft Dungeons, Unrailed, plus the vendor UDP ports |
