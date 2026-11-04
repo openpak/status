@@ -148,6 +148,8 @@ var more = []struct{ group, name, text string }{
 	{"Switch vendor", "Minecraft Dungeons", "Minecraft Dungeons online services."},
 	{"Switch vendor", "PlayFab (Astroneer)", "Astroneer sign-in."},
 	{"Switch vendor", "Unrailed", "Unrailed online play."},
+	{"Switch vendor", "Hello Kitty Island Adventure", "Hello Kitty Island Adventure invite codes and cloud saves."},
+	{"Switch vendor", "Plants vs. Zombies (EA sign-in)", "Plants vs. Zombies: Battle for Neighborville sign-in."},
 	{"Wii U/3DS", "Account service", "Nintendo Network ID sign-in and account setup."},
 	{"Wii U/3DS", "Account terms", "The terms shown while creating or linking an account."},
 	{"Wii U/3DS", "Account service (Wii U, port 4443)", "The same account service, reached the way a patched Wii U reaches it: by address, on port 4443."},

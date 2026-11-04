@@ -35,7 +35,7 @@ var notServices = map[string]string{
 var (
 	infraUnits = set("postgres", "redis", "mongo", "minio", "mailpit", "traefik", "edge", "qw-cloudflared", "turn", "connectivity")
 	vendors    = set("demonware", "eos", "photon", "playfab", "klei", "shiro", "t17", "ugs", "among-us", "spelunky2",
-		"battlenet", "fall-guys", "fall-guys-round", "stumble-guys", "unrailed", "astroneer", "minecraft-dungeons")
+		"battlenet", "fall-guys", "fall-guys-round", "stumble-guys", "unrailed", "astroneer", "minecraft-dungeons", "hello-kitty-island-adventure", "plants-vs-zombies")
 	switchInfra = set("judd", "splatnet")
 	urlRe       = regexp.MustCompile(`(?m)^\s*url:\s*(\S+)`)
 )

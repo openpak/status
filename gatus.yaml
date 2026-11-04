@@ -1097,6 +1097,25 @@ endpoints:
     conditions:
       - "[STATUS] == 404"
 
+  - name: Hello Kitty Island Adventure
+    group: Switch vendor
+    url: https://minsc.sunblink.io/prod/servers/settings
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*photonAppId*)"
+
+  - name: Plants vs. Zombies (EA sign-in)
+    group: Switch vendor
+    url: https://accounts.ea.com/connect/auth
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 400"
+
   # ---- A Wii U or 3DS: the OpenPak names the patched consoles use ----
 
   - name: Account service
@@ -1675,6 +1694,12 @@ endpoints:
     interval: 120s
     conditions:
       - "[CONNECTED] == true"
+  - name: plants-vs-zombies 42230/tcp
+    group: Switch vendor
+    url: tcp://145.241.199.19:42230
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
   - name: playfab 3075/udp
     group: Switch vendor
     url: udp://145.241.199.19:3075
@@ -2012,6 +2037,7 @@ endpoints:
 #   edge (public TCP relay to Traefik, covered by the Console checks)
 #   eos (no published port)
 #   fall-guys (no published port)
+#   hello-kitty-island-adventure (no published port)
 #   judd (no published port)
 #   klei (no published port)
 #   leaderboards (only ports bound to a specific address)

@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.6.1
+
+- Switch vendor checks for Hello Kitty Island Adventure (minsc.sunblink.io) and Plants vs. Zombies (accounts.ea.com, plus the generated 42230/tcp probe); both names added to the status box's host overrides.
+
 ## v0.6.0
 
 - `deploy-drift/`: daily deploy-drift check for both boxes (units behind their newest release, org image packages with no unit, `# pinned:` comments honoured, reason the auto-update path missed each unit), report in `~/openpak/deploy/drift-report.txt`, failure alert through `openpak-unit-failed@`.
