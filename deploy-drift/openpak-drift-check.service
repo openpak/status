@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenPak deploy drift: units behind their release, services never deployed
+OnFailure=openpak-unit-failed@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/openpak-drift-check
+Environment=DRIFT_ROLE=main
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=15min

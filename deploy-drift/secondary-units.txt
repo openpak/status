@@ -1,0 +1,10 @@
+# Image packages that run on the SECONDARY box (145.241.228.207), one per line. The secondary runs its own
+# openpak-drift-check (DRIFT_ROLE=secondary) for the behind-tag check; this list only tells the main box's
+# "no unit anywhere" check what the secondary runs. Keep in step with the secondary's quadlets.
+nn-nncs
+pakka
+x360-xexds
+x360-dns
+x360-gateway
+x360-kdc
+xb-gateway

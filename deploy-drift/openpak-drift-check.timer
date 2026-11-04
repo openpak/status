@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily OpenPak deploy drift check (07:15 UTC)
+
+[Timer]
+OnCalendar=*-*-* 07:15:00 UTC
+Persistent=true
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target

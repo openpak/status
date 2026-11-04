@@ -1,0 +1,2 @@
+# Container packages in the openpak org that are deliberately not deployed as a quadlet on either box.
+# One package name per line, then `# reason`. Read by openpak-drift-check (~/openpak/deploy/drift-allowlist.txt).

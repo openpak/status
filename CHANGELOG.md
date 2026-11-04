@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.6.0
+
+- `deploy-drift/`: daily deploy-drift check for both boxes (units behind their newest release, org image packages with no unit, `# pinned:` comments honoured, reason the auto-update path missed each unit), report in `~/openpak/deploy/drift-report.txt`, failure alert through `openpak-unit-failed@`.
+
 ## v0.5.0
 
 - Family headings are the companies: Nintendo, Sony, Microsoft, then OpenPak over Shared services and Websites (`shared/networks.json`); the gap-only group is gone.

@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""openpak-drift-check: is every service that has a release actually running it?
+
+Run daily by openpak-drift-check.timer and by hand (`openpak-drift-check`). Never rolls anything.
+
+1. Units behind their tag: every ghcr.io/openpak/* quadlet in ~/.config/containers/systemd is compared with the
+   newest v*.*.* release image on ghcr (digest of that tag's manifest vs the digests of the image the unit
+   runs). A quadlet carrying a `# pinned: <reason>` comment is listed and skipped.
+2. Repos with no unit (main role only): every container package in the openpak org must back a quadlet on this
+   box, be named in secondary-units.txt (images run on the secondary box) or be in drift-allowlist.txt.
+3. Report: ~/openpak/deploy/drift-report.txt. Exit 1 when anything is flagged, so the oneshot unit fails and
+   OnFailure= fires openpak-unit-failed@ (Pakka announces it).
+
+For each flagged unit the report says why the per-unit podman-auto-update path did not catch it.
+
+Env: DRIFT_ROLE=main|secondary (secondary skips check 2), DRIFT_DEPLOY (default ~/openpak/deploy).
+"""
+import base64, json, os, re, subprocess, sys, time, urllib.request, urllib.error
+from pathlib import Path
+
+HOME = Path.home()
+ROLE = os.environ.get("DRIFT_ROLE", "main")
+DEPLOY = Path(os.environ.get("DRIFT_DEPLOY", HOME / "openpak/deploy"))
+QDIR = HOME / ".config/containers/systemd"
+REPORT = DEPLOY / "drift-report.txt"
+ALLOW = DEPLOY / "drift-allowlist.txt"
+SECOND = DEPLOY / "secondary-units.txt"
+ORG = "openpak"
+SEMVER = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
+ACCEPT = ", ".join([
+    "application/vnd.oci.image.index.v1+json", "application/vnd.docker.distribution.manifest.list.v2+json",
+    "application/vnd.oci.image.manifest.v1+json", "application/vnd.docker.distribution.manifest.v2+json"])
+
+
+def sh(*a):
+    return subprocess.run(a, capture_output=True, text=True).stdout.strip()
+
+
+def creds():
+    d = json.load(open(HOME / ".config/containers/auth.json"))["auths"]["ghcr.io"]
+    return base64.b64decode(d["auth"]).decode()
+
+
+CRED = creds()
+_tok = {}
+
+
+def http(url, headers=None, method="GET"):
+    req = urllib.request.Request(url, headers=headers or {}, method=method)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.status, dict(r.headers), r.read()
+
+
+def token(repo):
+    if repo not in _tok:
+        b = base64.b64encode(CRED.encode()).decode()
+        _, _, body = http(f"https://ghcr.io/token?scope=repository:{ORG}/{repo}:pull", {"Authorization": "Basic " + b})
+        _tok[repo] = json.loads(body)["token"]
+    return _tok[repo]
+
+
+def reg_tags(repo):
+    _, _, body = http(f"https://ghcr.io/v2/{ORG}/{repo}/tags/list?n=1000", {"Authorization": "Bearer " + token(repo)})
+    return json.loads(body).get("tags") or []
+
+
+def reg_digest(repo, ref):
+    _, h, _ = http(f"https://ghcr.io/v2/{ORG}/{repo}/manifests/{ref}",
+                   {"Authorization": "Bearer " + token(repo), "Accept": ACCEPT}, "HEAD")
+    return {k.lower(): v for k, v in h.items()}.get("docker-content-digest")
+
+
+def parse_quadlets():
+    units = []
+    for f in sorted(QDIR.glob("*.container")):
+        txt = f.read_text()
+        m = re.search(r"^Image=(\S+)", txt, re.M)
+        if not m:
+            continue
+        pin = re.search(r"^#\s*pinned:\s*(.+)$", txt, re.M)
+        units.append({
+            "oneshot": re.search(r"^Type=oneshot", txt, re.M) is not None,
+            "manual": re.search(r"^\[Install\]", txt, re.M) is None and re.search(r"^Type=oneshot", txt, re.M) is None,
+            "unit": f.stem, "image": m.group(1), "pin": pin.group(1).strip() if pin else None,
+            "auto": re.search(r"^AutoUpdate=(\S+)", txt, re.M) is not None
+                    and re.search(r"^AutoUpdate=(\S+)", txt, re.M).group(1),
+        })
+    return units
+
+
+def split_image(img):
+    # ghcr.io/openpak/name[:tag|@sha256:..]
+    rest = img.split("/", 2)[2]
+    if "@" in rest:
+        n, d = rest.split("@", 1)
+        return n, None, d
+    n, _, t = rest.partition(":")
+    return n, t or "latest", None
+
+
+def running_digests(unit):
+    """-> (running?, set of repo digests, local tag string) of the container the unit runs."""
+    out = sh("podman", "ps", "--filter", f"label=PODMAN_SYSTEMD_UNIT={unit}.service", "--format", "{{.ImageID}}|{{.Image}}")
+    if not out:
+        return False, set(), ""
+    iid, image = out.splitlines()[0].split("|", 1)
+    rd = sh("podman", "image", "inspect", iid, "--format", "{{json .RepoDigests}}")
+    return True, set(json.loads(rd) and [x.split("@")[-1] for x in json.loads(rd)] or []), image
+
+
+def auto_update_state():
+    t = sh("systemctl", "--user", "is-enabled", "podman-auto-update.timer") or "?"
+    last = sh("systemctl", "--user", "show", "podman-auto-update.service", "-p", "ExecMainExitTimestamp", "--value")
+    return t, last
+
+
+def main():
+    flagged, pinned, ok, lines = [], [], 0, []
+    cache = {}
+    at_enabled, at_last = auto_update_state()
+    units = parse_quadlets()
+    deployed_names = set()
+    for u in units:
+        if not u["image"].startswith(f"ghcr.io/{ORG}/"):
+            if u["image"].startswith("localhost/"):
+                flagged.append((u["unit"], f"{u['image']}: local image, never updated by a release (auto-update cannot pull localhost)"))
+            continue
+        name, tag, dig = split_image(u["image"])
+        deployed_names.add(name)
+        if name not in cache:
+            try:
+                tags = reg_tags(name)
+                sem = sorted(((tuple(map(int, SEMVER.match(t).groups())), t) for t in tags if SEMVER.match(t)))
+                top = sem[-1][1] if sem else None
+                cache[name] = (top, reg_digest(name, top) if top else None, reg_digest(name, "latest") if "latest" in tags else None)
+            except Exception as e:  # registry/unreachable: say so, do not guess
+                cache[name] = (None, None, None, str(e))
+        c = cache[name]
+        if len(c) == 4:
+            flagged.append((u["unit"], f"{name}: cannot read ghcr ({c[3]})"))
+            continue
+        top, topd, latestd = c
+        want = topd or latestd
+        running, have, local = running_digests(u["unit"])
+        if u["pin"]:
+            pinned.append((u["unit"], name, local or u["image"], top, u["pin"]))
+            continue
+        if not running and (u["oneshot"] or u["manual"]):
+            # job or manual unit: compare the image on disk with the release instead
+            rd = sh("podman", "image", "inspect", u["image"], "--format", "{{json .RepoDigests}}")
+            have = {x.split("@")[-1] for x in (json.loads(rd) if rd.startswith("[") else [])}
+            st = sh("systemctl", "--user", "is-active", u["unit"] + ".service")
+            if u["oneshot"] and st == "failed":
+                flagged.append((u["unit"], f"{name}: oneshot job is in state failed (journalctl --user -u {u['unit']})"))
+                continue
+            if want in have:
+                ok += 1
+                continue
+            running, local = True, u["image"] + " (on disk, job not running)"
+        if not running:
+            flagged.append((u["unit"], f"{name}: no running container (unit inactive or failed); expected {top or 'latest'}"))
+            continue
+        if want in have:
+            ok += 1
+            continue
+        # behind: say why the AutoUpdate path did not catch it
+        if dig:
+            why = f"quadlet pins the digest {dig[:19]}..; auto-update never moves a digest pin. Add `# pinned: <reason>` or switch to :latest"
+        elif tag != "latest":
+            why = f"quadlet fixes the tag :{tag}; auto-update only re-pulls that tag, so a new release needs the quadlet edited. Add `# pinned: <reason>` or follow :latest"
+        elif u["auto"] != "registry":
+            why = "no AutoUpdate=registry in the quadlet"
+        elif topd and latestd and topd != latestd:
+            lt = [t for t in reg_tags(name) if reg_digest(name, t) == latestd and SEMVER.match(t)]
+            why = f"ghcr :latest is not the newest release (:latest = {','.join(lt) or 'a non-release build'}); the release workflow did not move :latest"
+        else:
+            why = (f"registry is right (:latest == {top}) but the unit still runs another digest; podman-auto-update.timer "
+                   f"{at_enabled}, last run {at_last or 'never'}: it has not restarted this unit yet, or the restart failed (journalctl --user -u {u['unit']})")
+        flagged.append((u["unit"], f"{name}: running {local or '?'} but newest release is {top or 'latest'}; {why}"))
+
+    # check 2: org packages with no unit
+    nounit = []
+    if ROLE == "main":
+        second = set()
+        if SECOND.exists():
+            second = {l.split("#")[0].strip() for l in SECOND.read_text().splitlines() if l.split("#")[0].strip()}
+        allow = {}
+        if ALLOW.exists():
+            for l in ALLOW.read_text().splitlines():
+                n = l.split("#")[0].strip()
+                if n:
+                    allow[n] = l.partition("#")[2].strip()
+        pkgs, page = [], 1
+        while True:
+            _, _, body = http(f"https://api.github.com/orgs/{ORG}/packages?package_type=container&per_page=100&page={page}",
+                              {"Authorization": "Bearer " + CRED.split(":", 1)[1], "Accept": "application/vnd.github+json"})
+            b = json.loads(body)
+            pkgs += [p["name"] for p in b]
+            if len(b) < 100:
+                break
+            page += 1
+        for p in sorted(pkgs):
+            if p in deployed_names or p in second or p in allow:
+                continue
+            nounit.append(p)
+        for p in nounit:
+            flagged.append((p, "package publishes a ghcr image but no quadlet on either box and not in drift-allowlist.txt: deploy it, or allowlist it with a reason"))
+
+    now = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
+    out = [f"openpak deploy drift report, {now}, host {os.uname().nodename}, role {ROLE}",
+           f"units current: {ok}   pinned (skipped): {len(pinned)}   FLAGGED: {len(flagged)}",
+           f"podman-auto-update.timer: {at_enabled}, last run {at_last or 'never'}", ""]
+    if flagged:
+        out.append("FLAGGED")
+        out += [f"  {a}: {b}" for a, b in flagged]
+        out.append("")
+    if pinned:
+        out.append("PINNED on purpose (# pinned: comment in the quadlet)")
+        out += [f"  {u}: {n} runs {l}, newest release {t}; reason: {r}" for u, n, l, t, r in pinned]
+        out.append("")
+    text = "\n".join(out) + "\n"
+    tmp = REPORT.with_suffix(".txt.new")
+    tmp.write_text(text)
+    tmp.replace(REPORT)
+    sys.stdout.write(text)
+    if flagged:
+        sh("systemd-cat", "-t", "openpak-drift", "-p", "err", "/bin/echo",
+           f"DEPLOY DRIFT on {os.uname().nodename}: {len(flagged)} flagged: " + "; ".join(a for a, _ in flagged)[:600])
+    return 1 if flagged else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
