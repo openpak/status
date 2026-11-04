@@ -45,7 +45,7 @@ type Category struct {
 
 type Network struct {
 	ID, Title, Note, Family string
-	NewFamily               bool // the first network shown of its family, or of the shared group (empty family): the page draws a heading or a gap above it
+	NewFamily               bool // the first network shown of its family (Nintendo, Sony, Microsoft, OpenPak): the page draws the heading above it
 	Cats                    []Category
 	Rollup
 }
@@ -271,7 +271,7 @@ func assemble(checks []check) []Network {
 			continue
 		}
 		net.Rollup = rollup(up, total, "check")
-		net.NewFamily = len(out) > 0 && out[len(out)-1].Family != n.Family || len(out) == 0 && n.Family != ""
+		net.NewFamily = len(out) == 0 || out[len(out)-1].Family != n.Family
 		out = append(out, net)
 	}
 	return out

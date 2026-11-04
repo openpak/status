@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.5.0
+
+- Family headings are the companies: Nintendo, Sony, Microsoft, then OpenPak over Shared services and Websites (`shared/networks.json`); the gap-only group is gone.
+
 ## v0.4.1
 
 - A clearer gap before Shared services.
