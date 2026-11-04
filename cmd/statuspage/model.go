@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/openpak/status/shared"
 	"regexp"
 	"sort"
 	"strings"
@@ -43,8 +44,9 @@ type Category struct {
 }
 
 type Network struct {
-	ID, Title, Note string
-	Cats            []Category
+	ID, Title, Note, Family string
+	NewFamily               bool // the first network shown of its family, or of the shared group (empty family): the page draws a heading or a gap above it
+	Cats                    []Category
 	Rollup
 }
 
@@ -172,16 +174,17 @@ func place(c check) (net, cat string) {
 	return "shared", "Core services"
 }
 
-var networkOrder = []struct{ ID, Title, Note string }{
-	{"switch", "Switch", "Accounts, the eShop, friends and the game servers a Switch reaches."},
-	{"wiiu-3ds", "Wii U / 3DS", "Accounts, OpenVerse, SpotPass, the shop and each game's session port."},
-	{"wii-ds", "Wii / DS", "Wi-Fi Connection: sign-in, downloads, game stats and matchmaking."},
-	{"xbox360", "Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
-	{"xbox", "Original Xbox", "Sign-in, friends, accounts and voice for the original Xbox."},
-	{"ps3", "PlayStation 3", "PlayStation Network services a PS3 reaches."},
-	{"ps4", "PlayStation 4", "PlayStation Network services a PS4 reaches."},
-	{"shared", "Shared services", "What every console network shares: accounts, saves, scores, DNS, the NAT check and the relay."},
-	{"websites", "Websites", "What you use in a browser or on your phone, and the sites that go with the games."},
+// networkNotes is the sentence under each network's name; the order and titles come from shared/networks.json.
+var networkNotes = map[string]string{
+	"switch":   "Accounts, the eShop, friends and the game servers a Switch reaches.",
+	"wiiu-3ds": "Accounts, OpenVerse, SpotPass, the shop and each game's session port.",
+	"wii-ds":   "Wi-Fi Connection: sign-in, downloads, game stats and matchmaking.",
+	"xbox360":  "Xbox Live services an Xbox 360 reaches through the OpenPak gateway.",
+	"xbox":     "Sign-in, friends, accounts and voice for the original Xbox.",
+	"ps3":      "PlayStation Network services a PS3 reaches.",
+	"ps4":      "PlayStation Network services a PS4 reaches.",
+	"shared":   "What every console network shares: accounts, saves, scores, DNS, the NAT check and the relay.",
+	"websites": "What you use in a browser or on your phone, and the sites that go with the games.",
 }
 
 var catOrder = []string{"Services", "Game servers", "Third-party game servers", "Core services", "Connectivity", "Websites and app", "Companion sites", "Relay regions"}
@@ -224,8 +227,8 @@ func assemble(checks []check) []Network {
 		rows[key{n, cat}] = append(rows[key{n, cat}], c.row)
 	}
 	var out []Network
-	for _, n := range networkOrder {
-		net := Network{ID: n.ID, Title: n.Title, Note: n.Note}
+	for _, n := range shared.Networks {
+		net := Network{ID: n.ID, Title: n.Title, Note: networkNotes[n.ID], Family: n.Family}
 		var up, total int
 		for _, cat := range catOrder {
 			rs := rows[key{n.ID, cat}]
@@ -268,6 +271,7 @@ func assemble(checks []check) []Network {
 			continue
 		}
 		net.Rollup = rollup(up, total, "check")
+		net.NewFamily = len(out) > 0 && out[len(out)-1].Family != n.Family || len(out) == 0 && n.Family != ""
 		out = append(out, net)
 	}
 	return out

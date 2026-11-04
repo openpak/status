@@ -116,3 +116,25 @@ func TestRollupAndOpenPath(t *testing.T) {
 		t.Errorf("problems: %v", v.Problems)
 	}
 }
+
+// Networks read family by family, oldest first, with Shared services and Websites last; a network
+// nobody runs (PSP) has a place but does not appear.
+func TestNetworkOrder(t *testing.T) {
+	mk := func(group, name string) gatusEndpoint {
+		e := at(true)
+		e.Group, e.Name, e.Key = group, name, keyOf(group, name)
+		return e
+	}
+	v := build([]gatusEndpoint{mk("PS4", "System update checks"), mk("Original Xbox", "Accounts"), mk("Xbox 360", "Dashboard home"),
+		mk("Console", "eShop"), mk("Wii U/3DS", "eShop"), mk("Wii/DS", "DS login"), mk("PS3", "Sign-in"), mk("Core", "Accounts"), mk("Public", "Website")})
+	var ids []string
+	for _, n := range v.Networks {
+		ids = append(ids, n.ID)
+	}
+	if got, want := strings.Join(ids, ","), "wii-ds,wiiu-3ds,switch,ps3,ps4,xbox,xbox360,shared,websites"; got != want {
+		t.Errorf("order %s, want %s", got, want)
+	}
+	if !v.Networks[0].NewFamily || v.Networks[1].NewFamily || !v.Networks[3].NewFamily || !v.Networks[5].NewFamily || !v.Networks[7].NewFamily || v.Networks[8].NewFamily {
+		t.Errorf("family headings: %+v", v.Networks)
+	}
+}

@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.4.0
+
+- Networks are ordered by family, then generation, oldest first: Nintendo (Wii / DS, Wii U / 3DS, Switch), PlayStation (PS3, PSP, PS Vita, PS4, PS5), Xbox (Original Xbox, Xbox 360, Xbox One), then Shared services and Websites, with small family headings. The order is `shared/networks.json`, which openpak.org/status and its network map copy, so all three agree. PSP, PS Vita and Xbox One have a place but appear once they have checks.
+
 ## v0.3.1
 
 - Category titles use the UI font like every other title on the page.

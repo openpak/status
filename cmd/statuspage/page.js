@@ -20,6 +20,7 @@
   var rows = [].slice.call(document.querySelectorAll('#nets .row'));
   if (q) q.addEventListener('input', function () {
     var s = q.value.trim().toLowerCase(), shown = 0;
+    [].forEach.call(document.querySelectorAll('#nets > .fam'), function (f) { f.hidden = !!s; });
     if (!s) {
       rows.forEach(function (r) { r.hidden = false; });
       details.forEach(function (d, i) { d.open = initial[i]; d.parentElement.hidden = false; });
