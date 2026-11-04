@@ -3,6 +3,12 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.3.0
+
+- One status design. The page is a drill-down: a row per console network (Switch, Wii U / 3DS, Wii / DS, Xbox 360, Original Xbox, PlayStation 3, PlayStation 4), then Shared services and Websites. Opening a network shows its categories (Services, Game servers, Third-party game servers, ...), and opening a category shows the individual checks with status, an uptime strip with a hover tooltip, uptime percentage, latency and last check. Every level shows the worst state beneath it (Operational, Partly down, Down), and a failing path opens by itself while everything else stays collapsed. Search opens the matching path; `#switch/game-servers` deep links open theirs. Real `<details>` controls: keyboard operable and working without scripting.
+- `/api/status` now answers with `Networks` (rolled up, with categories and rows), `Problems` ("Switch: eShop") and `Down`; the old `Groups` field stays for the network map. openpak.org/status reads the roll-ups.
+- `shared/`: the badge, banner, card and uptime-strip styles and the icon sprite, used by this page and copied byte for byte into the website (`scripts/sync-status-shared.sh` there; its tests fail on drift). Status colour is always paired with an icon and a word.
+
 ## v0.2.0
 
 - The page and `/api/status` show every check, in thirteen groups: On the web, Companion sites, Core services, On a Switch, Switch games (NEX), Switch games (NPLN), Switch games with their own servers, On a Wii U or 3DS, On a Wii or DS, Xbox 360, PS3, PS4, original Xbox. The generated game-session-port checks are listed too (friendly names, one line each, folded unless one is down) and count in the headline; each group says "N of M working". `/api/status` carries them as `Ports`.

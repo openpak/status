@@ -5,154 +5,163 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="60">
 <title>OpenPak status</title>
+<meta name="description" content="Is OpenPak working? Every network and service, checked from outside.">
+<meta property="og:title" content="OpenPak status"><meta property="og:type" content="website">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <style>
-/* The website's tokens verbatim, so this page is recognisably the same
-   product. Light and dark follow the reader's system setting; there is
-   nothing to toggle and no script on this page at all. */
+/* openpak.org's tokens, so this page is recognisably the same product. Light and dark follow the
+   reader's system setting. The shared component styles come from the same file openpak.org uses. */
 :root {
   color-scheme: light dark;
-  --paper: #ffffff; --paper-2: #f7f7f8; --raised: #ffffff;
-  --ink: #16161a; --ink-2: #3d3f47; --muted: #6b6e79;
-  --line: #e4e4e8;
-  --accent: #4f46e5; --accent-weak: #eef0ff;
-  --ok: #1a7f4b; --ok-weak: #e8f5ee; --ok-line: #bfe0cd;
-  --bad: #b3261e; --bad-weak: #fbeceb; --bad-line: #eec4c1;
-  --r: 12px;
+  --paper: #e9ecf0; --paper-2: #f2f4f7; --raised: #ffffff; --sunk: #dde1e7;
+  --ink: #20262f; --ink-2: #48505c; --muted: #6b7380; --faint: #9aa1ab;
+  --line: #d9dde3; --line-2: #c3c9d1; --cursor: #0094be;
+  --accent: #4f46e5; --accent-weak: #eceeff; --accent-line: #c5cafb;
+  --ok: #138a45; --ok-weak: #e3f5ea; --ok-line: #b2e0c3;
+  --bad: #c42b2b; --bad-weak: #fde9e9; --bad-line: #f2bfbf;
+  --warn: #a35f00; --warn-weak: #fdf2dc; --warn-line: #efd39c;
+  --shadow-sm: 0 1px 0 rgb(32 38 47 / .06);
+  --shadow: 0 1px 0 rgb(32 38 47 / .06), 0 6px 16px -10px rgb(32 38 47 / .25);
+  --font-ui: "M PLUS Rounded 1c", ui-rounded, ui-sans-serif, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #101114; --paper-2: #191a1f; --raised: #1c1e24;
-    --ink: #e9eaee; --ink-2: #b7bac2; --muted: #8a8e99;
-    --line: #26282e;
-    --accent: #818cf8; --accent-weak: #1c2040;
-    --ok: #4ec98a; --ok-weak: #12251b; --ok-line: #2c4d3a;
-    --bad: #ff8079; --bad-weak: #2a1615; --bad-line: #57302c;
+    --paper: #24272d; --paper-2: #2b2f36; --raised: #31353d; --sunk: #1d2025;
+    --ink: #eef1f5; --ink-2: #c4c9d1; --muted: #949ba6; --faint: #6c737e;
+    --line: #3b4048; --line-2: #4a505a; --cursor: #3ad7f2;
+    --accent: #9198ff; --accent-weak: #2e3156; --accent-line: #4a4f8c;
+    --ok: #4fd486; --ok-weak: #1f3a2b; --ok-line: #2f5c42;
+    --bad: #ff7676; --bad-weak: #432528; --bad-line: #6e3439;
+    --warn: #f6bd4f; --warn-weak: #3f3320; --warn-line: #6a5328;
+    --shadow-sm: 0 1px 0 rgb(0 0 0 / .25); --shadow: 0 1px 0 rgb(0 0 0 / .25), 0 8px 18px -10px rgb(0 0 0 / .6);
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--paper); color: var(--ink);
-  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+a { color: var(--accent); }
+.wrap { max-width: 52rem; margin: 0 auto; padding: clamp(14px, 4vw, 28px); }
+.top { display: flex; align-items: center; gap: 12px; padding: 6px 0 22px; }
+.top img { width: 34px; height: 34px; }
+.top b { font: 800 1.1rem var(--font-ui); letter-spacing: -.01em; }
+.top a { margin-left: auto; text-decoration: none; font-size: .9rem; }
+.top a:hover { text-decoration: underline; }
+h1 { margin: 0 0 14px; font: 800 clamp(1.5rem, 4vw, 1.9rem) var(--font-ui); letter-spacing: -.02em; }
+.intro { margin: 14px 0 18px; color: var(--ink-2); font-size: .94rem; max-width: 42rem; }
+
+.tools { display: flex; gap: 10px; align-items: center; margin: 0 0 14px; }
+.tools input { flex: 1; min-width: 0; font: inherit; padding: .6rem .85rem; border: 1px solid var(--line-2); border-radius: 10px; background: var(--raised); color: var(--ink); }
+.tools input:focus-visible, summary:focus-visible { outline: 2px solid var(--cursor); outline-offset: 2px; }
+.tools .hint { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.js-only { display: none; } .js .js-only { display: flex; }
+.none { display: none; padding: 18px; text-align: center; color: var(--muted); }
+
+ul.l { list-style: none; margin: 0; padding: 0; }
+.nets > li + li { margin-top: 10px; }
+details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .7rem; }
+details > summary::-webkit-details-marker { display: none; }
+summary .chev { width: 1.1rem; height: 1.1rem; flex: none; color: var(--muted); transition: transform .15s; }
+details[open] > summary .chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { summary .chev { transition: none; } }
+.net > summary { padding: 1rem 1.1rem; border-radius: 14px; }
+.net > summary:hover, .cat > summary:hover { background: var(--paper-2); }
+.net > summary .t { font: 800 1.08rem var(--font-ui); }
+summary .t { flex: 1; min-width: 0; }
+.sum { color: var(--muted); font-size: .85rem; text-align: right; }
+.net > .note { margin: 0; padding: 0 1.1rem .6rem 2.8rem; color: var(--muted); font-size: .88rem; }
+.cats { border-top: 1px solid var(--line); }
+.cat + .cat { border-top: 1px solid var(--line); }
+.cat > summary { padding: .8rem 1.1rem .8rem 1.5rem; }
+.cat > summary .t { font-weight: 700; }
+.rows { border-top: 1px solid var(--line); background: var(--paper-2); }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center; padding: .65rem 1.1rem .65rem 2.6rem; }
+.row + .row { border-top: 1px solid var(--line); }
+.row .n { font-weight: 600; overflow-wrap: anywhere; }
+.row .n small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; }
+.row.bad { background: var(--bad-weak); }
+.row .m { grid-column: 1 / -1; display: flex; gap: 4px 14px; align-items: center; color: var(--muted); font-size: .8rem; flex-wrap: wrap; }
+.row .m span.u { font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+footer { margin: 28px 0 8px; color: var(--muted); font-size: .85rem; line-height: 1.7; }
+@media (max-width: 34rem) {
+  .net > summary { flex-wrap: wrap; }
+  .sum, .row .chk, .row .lat { display: none; }
+  .row { padding-left: 1.4rem; } .cat > summary { padding-left: 1.1rem; }
+  .net > .note { padding-left: 1.1rem; }
 }
-.wrap { max-width: 44rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
-header { display: flex; align-items: center; gap: 12px; padding: 8px 0 28px; }
-header img { width: 34px; height: 34px; }
-header b { font-size: 18px; letter-spacing: -0.01em; }
-header a { margin-left: auto; color: var(--accent); text-decoration: none; font-size: 14px; }
-header a:hover { text-decoration: underline; }
-
-.banner {
-  border: 1px solid var(--line); border-radius: var(--r);
-  padding: 22px; margin-bottom: 28px; background: var(--raised);
-}
-.banner.ok   { background: var(--ok-weak);  border-color: var(--ok-line); }
-.banner.some { background: var(--bad-weak); border-color: var(--bad-line); }
-.banner.major{ background: var(--bad-weak); border-color: var(--bad-line); }
-.banner h1 { margin: 0; font-size: clamp(22px, 5vw, 28px); letter-spacing: -0.02em; }
-.banner p { margin: 6px 0 0; color: var(--ink-2); }
-.banner .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; vertical-align: 1px; }
-.ok .dot { background: var(--ok); } .some .dot, .major .dot { background: var(--bad); }
-
-h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 28px 0 4px; }
-h2 + p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
-
-.card { border: 1px solid var(--line); border-radius: var(--r); background: var(--raised); overflow: hidden; }
-.svc { padding: 16px; border-top: 1px solid var(--line); }
-.svc:first-child { border-top: 0; }
-.svc-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.svc-name { font-weight: 600; }
-.state { font-size: 13px; font-weight: 600; margin-left: auto; }
-.state.up { color: var(--ok); } .state.down { color: var(--bad); }
-.svc p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-
-.bars { display: flex; gap: 2px; margin-top: 12px; height: 26px; align-items: stretch; }
-.bars i { flex: 1 1 0; border-radius: 2px; background: var(--ok); opacity: .75; min-width: 2px; }
-.bars i.down { background: var(--bad); opacity: 1; }
-.meta { display: flex; gap: 14px; margin-top: 8px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
-
-h2 .count { float: right; text-transform: none; letter-spacing: 0; font-weight: 500; }
-details.ports { margin-top: 10px; }
-details.ports > summary { cursor: pointer; color: var(--accent); font-size: 14px; padding: 6px 0; }
-details.ports[open] > summary { margin-bottom: 6px; }
-.port { display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 14px; }
-.port:first-child { border-top: 0; }
-footer { margin: 36px 0 8px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+{{css}}
 </style>
 </head>
 <body>
+{{icons}}
 <div class="wrap">
-  <header>
+  <div class="top">
     <img src="/icon.svg" alt="">
-    <b>OpenPak</b>
+    <b>OpenPak status</b>
     <a href="https://openpak.org">openpak.org &rarr;</a>
-  </header>
-
-  <div class="banner {{.State}}">
-    <h1><span class="dot"></span>{{.Headline}}</h1>
-    <p>{{.Sub}}</p>
   </div>
 
-  {{if .Regions}}
-    <h2>Regions</h2>
-    <p>Places that run game relays. A room you host is served from the one for your country; friends join it from anywhere.</p>
-    <div class="card">
-      {{range .Regions}}
-      <div class="svc">
-        <div class="svc-head">
-          <span class="svc-name">{{.Name}} · {{.Country}}</span>
-          <span class="state up">{{.Players}} playing</span>
-        </div>
-        <p>{{.Services}}</p>
-      </div>
-      {{end}}
+  <div class="sv-banner {{if eq .State "ok"}}{{else if eq .State "some"}}warn{{else}}bad{{end}}" role="status">
+    <svg class="sv-ic sv-big" aria-hidden="true"><use href="#sv-{{if eq .State "ok"}}ok{{else if eq .State "some"}}warn{{else}}down{{end}}"/></svg>
+    <div>
+      <h2>{{.Headline}}</h2>
+      <p>{{.Sub}}</p>
     </div>
+  </div>
+  <p class="intro">Every check runs from a separate machine outside the OpenPak network, the way a console, a browser or the app reaches it, so this page keeps answering when OpenPak cannot. Open a network to see its services and game servers. Updated {{.Generated}}; the page refreshes itself every minute.</p>
+
+  {{if .Networks}}
+  <div class="tools js-only">
+    <input id="q" type="search" placeholder="Search services and games" aria-label="Search services and games" autocomplete="off">
+  </div>
+  <ul class="l nets" id="nets">
+    {{range $n := .Networks}}
+    <li class="sv-card" data-item>
+      <details class="net" id="{{$n.ID}}" data-path="{{$n.ID}}"{{if $n.Open}} open{{end}}>
+        <summary>
+          <svg class="chev" aria-hidden="true"><use href="#sv-chev"/></svg>
+          <span class="t">{{$n.Title}}</span>
+          <span class="sum">{{$n.Sum}}</span>
+          <span class="sv-badge {{if eq $n.State "ok"}}ok{{else if eq $n.State "partial"}}warn{{else}}bad{{end}}"><svg class="sv-ic" aria-hidden="true"><use href="#sv-{{if eq $n.State "ok"}}ok{{else if eq $n.State "partial"}}warn{{else}}down{{end}}"/></svg>{{$n.Label}}</span>
+        </summary>
+        <p class="note">{{$n.Note}}</p>
+        <ul class="l cats">
+          {{range $c := $n.Cats}}
+          <li data-item>
+            <details class="cat" id="{{$c.ID}}" data-path="{{$c.ID}}"{{if $c.Open}} open{{end}}>
+              <summary>
+                <svg class="chev" aria-hidden="true"><use href="#sv-chev"/></svg>
+                <span class="t">{{$c.Title}}</span>
+                <span class="sum">{{$c.Sum}}</span>
+                <span class="sv-badge {{if eq $c.State "ok"}}ok{{else if eq $c.State "partial"}}warn{{else}}bad{{end}}"><svg class="sv-ic" aria-hidden="true"><use href="#sv-{{if eq $c.State "ok"}}ok{{else if eq $c.State "partial"}}warn{{else}}down{{end}}"/></svg>{{$c.Label}}</span>
+              </summary>
+              <ul class="l rows">
+                {{range $r := $c.Rows}}
+                <li class="row{{if not $r.Up}} bad{{end}}" data-item data-text="{{$r.Name}} {{$r.Note}}">
+                  <span class="n">{{$r.Name}}{{if $r.Note}}<small>{{$r.Note}}</small>{{end}}</span>
+                  <span class="sv-badge {{if $r.Up}}ok{{else}}bad{{end}}"><svg class="sv-ic" aria-hidden="true"><use href="#sv-{{if $r.Up}}ok{{else}}down{{end}}"/></svg>{{if $r.Up}}Working{{else}}Not responding{{end}}</span>
+                  {{if or $r.Hist $r.HasPlayers}}<span class="m">
+                    {{if $r.HasPlayers}}<span class="u">{{$r.Players}} playing</span>{{end}}
+                    {{if $r.Hist}}<span class="sv-hist" tabindex="0" role="img" data-h="{{$r.Hist}}" data-end="{{$r.HistEnd}}" data-step="{{$r.HistStep}}" aria-label="History of the last {{len $r.Hist}} checks, {{printf "%.1f" $r.Uptime}} percent answered">{{range bars $r.Hist}}<i{{if not .}} class="d"{{end}}></i>{{end}}</span>
+                    <span class="u" title="{{printf "%.1f" $r.Uptime}}% answered over the {{$.Window}}">{{printf "%.1f" $r.Uptime}}% uptime</span><span class="lat">{{$r.Latency}}</span><span class="chk">checked {{$r.Checked}}</span>{{end}}
+                  </span>{{end}}
+                </li>
+                {{end}}
+              </ul>
+            </details>
+          </li>
+          {{end}}
+        </ul>
+      </details>
+    </li>
+    {{end}}
+  </ul>
+  <p class="none" id="none">Nothing matches.</p>
   {{end}}
 
-  {{range .Groups}}
-    <h2>{{.Title}} <span class="count">{{.Working}} of {{.Total}} working</span></h2>
-    <p>{{.Note}}</p>
-    {{if .Services}}
-    <div class="card">
-      {{range .Services}}
-      <div class="svc">
-        <div class="svc-head">
-          <span class="svc-name">{{.Name}}</span>
-          <span class="state {{if .Up}}up{{else}}down{{end}}">{{if .Up}}Working{{else}}Not responding{{end}}</span>
-        </div>
-        {{if .Blurb}}<p>{{.Blurb}}</p>{{end}}
-        <div class="bars">
-          {{range .Bars}}<i class="{{if not .Up}}down{{end}}" title="{{.Title}}"></i>{{end}}
-        </div>
-        <div class="meta">
-          <span>{{printf "%.1f" .Uptime}}% over the {{$.Window}}</span>
-          <span>{{.Latency}}</span>
-          <span>checked {{.Checked}}</span>
-        </div>
-      </div>
-      {{end}}
-    </div>
-    {{end}}
-    {{if .Ports}}
-    <details class="ports"{{if not .Fold}} open{{end}}>
-      <summary>{{if .Services}}Game session ports{{else}}Games{{end}} ({{len .Ports}})</summary>
-      <div class="card">
-        {{range .Ports}}
-        <div class="port" title="{{printf "%.1f" .Uptime}}% over the {{$.Window}}, checked {{.Checked}}">
-          <span class="svc-name">{{.Name}}</span>
-          <span class="state {{if .Up}}up{{else}}down{{end}}">{{if .Up}}Working{{else}}Not responding{{end}}</span>
-        </div>
-        {{end}}
-      </div>
-    </details>
-    {{end}}
-  {{end}}
-
-  <footer>
-    Checked from a machine outside the network, so this page can still answer
-    when OpenPak cannot. Updated {{.Generated}}; this page refreshes itself
-    every minute.
-  </footer>
+  <footer>Not an official Nintendo, Microsoft or Sony service. Part of <a href="https://openpak.org">OpenPak</a>.</footer>
 </div>
+<script>
+{{script}}
+</script>
 </body>
 </html>

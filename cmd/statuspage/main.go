@@ -12,6 +12,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/openpak/status/shared"
 	"html/template"
 	"log"
 	"net/http"
@@ -28,6 +29,9 @@ var icon []byte
 
 //go:embed page.html
 var pageHTML string
+
+//go:embed page.js
+var pageJS string
 
 func getenv(k, d string) string {
 	if v := os.Getenv(k); v != "" {
@@ -179,56 +183,6 @@ func init() {
 	}
 }
 
-// Human names for the groups, and the order they read in.
-var groups = []struct{ Key, Title, Note string }{
-	{"Public", "On the web", "What you use in a browser or on your phone."},
-	{"Sites", "Companion sites", "The sites that go with the games: OpenVerse, Open Kart, SplatNet, Mario Maker, Rewards and the docs."},
-	{"Core", "Core services", "The services every console network shares: accounts, saves, scores, achievements, chat, rewards, parental controls, DNS, the NAT check and the relay."},
-	{"Console", "On a Switch", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
-	{"Switch NEX", "Switch games (NEX)", "The game session ports for Switch titles that match players through the Nintendo network."},
-	{"Switch NPLN", "Switch games (NPLN)", "The game session ports for Switch titles that use Nintendo's newer online service."},
-	{"Switch vendor", "Switch games with their own servers", "Games whose online play is run by their publisher or an engine vendor, answered here by their own names."},
-	{"Wii U/3DS", "On a Wii U or 3DS", "Accounts, Miiverse, SpotPass and the shop, then each game's session port."},
-	{"Wii/DS", "On a Wii or DS", "Wi-Fi Connection: sign-in, downloads, game stats and the matchmaking ports."},
-	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
-	{"PS3", "On a PS3", "PlayStation Network services a PS3 reaches, checked by the console's own host names."},
-	{"PS4", "On a PS4", "PlayStation Network services a PS4 reaches, checked by the console's own host names."},
-	{"Original Xbox", "On an original Xbox", "Sign-in, friends, accounts and voice for the original Xbox, checked from the status host."},
-}
-
-type service struct {
-	Name, Blurb string
-	Up          bool
-	Uptime      float64
-	Latency     string
-	Checked     string
-	Bars        []bar
-}
-
-type bar struct {
-	Up    bool
-	Title string
-}
-
-type groupView struct {
-	Title, Note string
-	Services    []service
-	// Ports are the generated game-session-port checks: one line each, folded unless one is down.
-	Ports   []service
-	Fold    bool
-	Working int
-	Total   int
-}
-
-type pageView struct {
-	Headline, Sub string
-	State         string // ok | some | major
-	Groups        []groupView
-	Regions       []region
-	Generated     string
-	Window        string
-}
-
 // region is a federation node as openpak.org lists it: approved, announced within the last
 // few minutes, and carrying whatever relays it runs. A node that stops announcing drops off
 // the list rather than turning red, which is the honest shape: nothing is claimed about it.
@@ -237,7 +191,19 @@ type region struct {
 	Players                 int
 }
 
-var tmpl = template.Must(template.New("page").Parse(pageHTML))
+var tmpl = template.Must(template.New("page").Funcs(template.FuncMap{
+	// bars is the strip: one flag per check, oldest first.
+	"bars": func(h string) []bool {
+		out := make([]bool, len(h))
+		for i := range h {
+			out[i] = h[i] == '1'
+		}
+		return out
+	},
+	"script": func() template.JS { return template.JS(pageJS) },
+	"css":    func() template.CSS { return template.CSS(shared.CSS) },
+	"icons":  func() template.HTML { return template.HTML(shared.Icons) },
+}).Parse(pageHTML))
 
 // cache keeps a refresh storm off Gatus: the checks run on their own schedule,
 // so asking it more often than that tells nobody anything new.
@@ -320,7 +286,7 @@ func (c *cache) get(client *http.Client, gatus string) (*pageView, error) {
 		return nil, err
 	}
 	c.view, c.at = build(eps), time.Now()
-	c.view.Regions = fetchRegions(client)
+	addRegions(c.view, fetchRegions(client))
 	return c.view, nil
 }
 
@@ -361,6 +327,26 @@ func fetchRegions(client *http.Client) []region {
 	return rs
 }
 
+// addRegions lists the relay regions under Shared services, with the players each one carries.
+func addRegions(v *pageView, regions []region) {
+	if len(regions) == 0 {
+		return
+	}
+	var rows []Row
+	for _, r := range regions {
+		rows = append(rows, Row{Name: r.Name + " (" + r.Country + ")", Note: r.Services, Up: true, Players: r.Players, HasPlayers: true})
+	}
+	c := Category{ID: "shared/relay-regions", Title: "Relay regions", Rows: rows, Rollup: rollup(len(rows), len(rows), "region")}
+	for i := range v.Networks {
+		if v.Networks[i].ID == "shared" {
+			n := &v.Networks[i]
+			n.Cats = append(n.Cats, c)
+			n.Rollup = rollup(n.Up+len(rows), n.Total+len(rows), "check")
+			return
+		}
+	}
+}
+
 // barCount is how much history the strip shows. Enough to see a pattern,
 // few enough to stay legible on a phone.
 const barCount = 40
@@ -397,108 +383,6 @@ func prettify(slug string) string {
 		}
 	}
 	return strings.Join(parts, " ")
-}
-
-func build(eps []gatusEndpoint) *pageView {
-	byGroup := map[string][]service{}
-	portsBy := map[string][]service{}
-	var down, total int
-	for _, e := range eps {
-		if len(e.Results) == 0 {
-			continue
-		}
-		name, bl := e.Name, blurb[e.Key]
-		if m := generatedName.FindStringSubmatch(e.Name); m != nil {
-			name, bl = prettify(m[1]), ""
-		}
-		last := e.Results[len(e.Results)-1]
-		total++
-		if !last.Success {
-			down++
-		}
-
-		var ok int
-		results := e.Results
-		if len(results) > barCount {
-			results = results[len(results)-barCount:]
-		}
-		bars := make([]bar, 0, len(results))
-		for _, r := range results {
-			bars = append(bars, bar{
-				Up:    r.Success,
-				Title: r.Timestamp.Local().Format("15:04") + statusWord(r.Success),
-			})
-		}
-		for _, r := range e.Results {
-			if r.Success {
-				ok++
-			}
-		}
-		isPort := generatedName.MatchString(e.Name)
-		sv := service{
-			Name:    name,
-			Blurb:   bl,
-			Up:      last.Success,
-			Uptime:  float64(ok) / float64(len(e.Results)) * 100,
-			Latency: fmt.Sprintf("%d ms", last.Duration/int64(time.Millisecond)),
-			Checked: humanSince(last.Timestamp),
-			Bars:    bars,
-		}
-		if isPort {
-			sv.Bars = nil
-			portsBy[e.Group] = append(portsBy[e.Group], sv)
-		} else {
-			byGroup[e.Group] = append(byGroup[e.Group], sv)
-		}
-	}
-
-	view := &pageView{
-		Generated: time.Now().Local().Format("15:04 MST"),
-		Window:    fmt.Sprintf("last %d checks", barCount),
-	}
-	switch {
-	case total == 0:
-		view.State, view.Headline = "major", "Nothing is being checked"
-		view.Sub = "No results yet."
-	case down == 0:
-		view.State, view.Headline = "ok", "Everything is working"
-		view.Sub = "All services responded to their last check."
-	case down >= total:
-		view.State, view.Headline = "major", "Everything is down"
-		view.Sub = "No service responded to its last check."
-	default:
-		view.State, view.Headline = "some", "Some things are having trouble"
-		view.Sub = fmt.Sprintf("%d of %d services did not respond to their last check.", down, total)
-	}
-
-	for _, g := range groups {
-		s, ports := byGroup[g.Key], portsBy[g.Key]
-		if len(s)+len(ports) == 0 {
-			continue
-		}
-		sort.Slice(s, func(i, j int) bool { return s[i].Name < s[j].Name })
-		sort.Slice(ports, func(i, j int) bool { return ports[i].Name < ports[j].Name })
-		gv := groupView{Title: g.Title, Note: g.Note, Services: s, Ports: ports, Fold: true, Total: len(s) + len(ports)}
-		for _, sv := range append(append([]service{}, s...), ports...) {
-			if sv.Up {
-				gv.Working++
-			}
-		}
-		for _, sv := range ports {
-			if !sv.Up {
-				gv.Fold = false
-			}
-		}
-		view.Groups = append(view.Groups, gv)
-	}
-	return view
-}
-
-func statusWord(up bool) string {
-	if up {
-		return " — fine"
-	}
-	return " — no answer"
 }
 
 func humanSince(t time.Time) string {
