@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.3.1
+
+- Category titles use the UI font like every other title on the page.
+
 ## v0.3.0
 
 - Same type as openpak.org: the M PLUS Rounded UI face is self-hosted (`/fonts/`, embedded) and the page uses the site's type scale, with a "Service status" heading and lede like the site's pages.
