@@ -53,36 +53,143 @@ type gatusEndpoint struct {
 // it does not know that device auth failing means nobody can sign in on a
 // console, and that is the only thing a reader actually wants told.
 var blurb = map[string]string{
-	"public_website":            "The site itself: signing in, your friends, your account.",
-	"public_accounts":           "Creating an account, signing in, and everything that needs your identity.",
-	"public_console-link-page":  "The page your phone opens when you link a console.",
-	"public_cloud-saves":        "Backing up and restoring game saves from an emulator or the website.",
-	"public_messages":           "Messages between friends on the website, the phone app and Miiverse.",
-	"public_game-leaderboards":  "The shared score boards every console's games post to and read from.",
-	"public_game-achievements":  "The trophies and achievements every console earns, kept in one place across consoles.",
-	"public_game-title-storage": "The shared place where every console's games keep each player's own data, like progress counters and uploads.",
-	"console_device-auth":       "The first thing a console does. If this is down, no console can reach the network at all.",
-	"console_account-service":   "How a console proves who you are. Sign-in and friends on the console depend on it.",
-	"console_sign-in-page":      "The sign-in screen a console shows while linking an account.",
-	"console_licence-service":   "Checked while a console adds an account. If it fails, adding an account stops part-way.",
-	"ps3_leaderboards":          "Posting scores and reading leaderboards in PS3 games.",
-	"ps3_trophies":              "Syncing and viewing PS3 trophies.",
-	"ps3_title-user-storage":    "Data a PS3 game keeps on the network for each player.",
-	"ps3_xmb-feeds":             "What's New and the game and video billboards on the PS3 home screen.",
-	"ps3_sign-in":               "Signing a PS3 in to the network.",
-	"ps3_profiles":              "Your name and avatar as other PS3 players see them.",
-	"ps3_friends":               "Your PS3 friends list.",
-	"ps3_presence":              "Seeing which PS3 friends are online and what they are playing.",
-	"ps3_game-update-checks":    "Checking for game updates when a PS3 game starts.",
-	"ps3_message-attachments":   "Files attached to PS3 messages between friends.",
-	"ps3_online-save-storage":   "Keeping PS3 game saves on the network.",
-	"ps4_system-update-checks":  "Checking for system software updates when a PS4 starts. OpenPak answers that nothing is newer, so consoles stay on their current firmware.",
+	"public_website":           "The site itself: signing in, your friends, your account.",
+	"public_console-link-page": "The page your phone opens when you link a console.",
+	"console_device-auth":      "The first thing a console does. If this is down, no console can reach the network at all.",
+	"console_account-service":  "How a console proves who you are. Sign-in and friends on the console depend on it.",
+	"console_sign-in-page":     "The sign-in screen a console shows while linking an account.",
+	"console_licence-service":  "Checked while a console adds an account. If it fails, adding an account stops part-way.",
+	"ps3_leaderboards":         "Posting scores and reading leaderboards in PS3 games.",
+	"ps3_trophies":             "Syncing and viewing PS3 trophies.",
+	"ps3_title-user-storage":   "Data a PS3 game keeps on the network for each player.",
+	"ps3_xmb-feeds":            "What's New and the game and video billboards on the PS3 home screen.",
+	"ps3_sign-in":              "Signing a PS3 in to the network.",
+	"ps3_profiles":             "Your name and avatar as other PS3 players see them.",
+	"ps3_friends":              "Your PS3 friends list.",
+	"ps3_presence":             "Seeing which PS3 friends are online and what they are playing.",
+	"ps3_game-update-checks":   "Checking for game updates when a PS3 game starts.",
+	"ps3_message-attachments":  "Files attached to PS3 messages between friends.",
+	"ps3_online-save-storage":  "Keeping PS3 game saves on the network.",
+	"ps4_system-update-checks": "Checking for system software updates when a PS4 starts. OpenPak answers that nothing is newer, so consoles stay on their current firmware.",
+}
+
+// more describes the checks added with the grouped page, by group and name; keyOf makes the same
+// key Gatus does (lower case, "-" for spaces and punctuation).
+var more = []struct{ group, name, text string }{
+	{"Public", "Sign-in page", "The page you sign in on."},
+	{"Public", "Account registration", "Creating an OpenPak account."},
+	{"Public", "Titles catalogue", "The list of games and what works in each, read by the website, the app and the emulators."},
+	{"Public", "Downloads", "The downloads page: patchers, the app and the emulators."},
+	{"Public", "Help centre", "Help articles and support tickets."},
+	{"Public", "App API", "The address the phone app and the emulators talk to."},
+	{"Public", "Network profile", "What the app and the console patchers fetch to learn which hosts to redirect."},
+	{"Public", "Redirect ceiling", "The signed list of names a console may be redirected for. If it fails to load, console DNS drops whole families of games at its next restart."},
+	{"Public", "Network CA certificate", "The certificate consoles are asked to trust."},
+	{"Public", "Companion data", "Per-game companion information for the app."},
+	{"Public", "News feed", "OpenPak news, as a feed."},
+	{"Public", "Regions list", "Relay regions run by volunteers."},
+	{"Public", "Logs viewer", "The admin log viewer, answering with its sign-in redirect."},
+	{"Sites", "OpenVerse", "The Miiverse replacement for Wii U and 3DS, on the web."},
+	{"Sites", "OpenVerse Lite", "Plain-HTTP OpenVerse for the PS3, Wii and DSi browsers."},
+	{"Sites", "Open Kart", "Mario Kart rankings and tournaments."},
+	{"Sites", "SplatNet", "Splatoon rotations and gatherings."},
+	{"Sites", "Mario Maker courses", "Browsing and sharing Mario Maker courses."},
+	{"Sites", "Rewards", "The rewards site: badges, themes and the shop."},
+	{"Sites", "Documentation", "docs.openpak.org."},
+	{"Core", "Accounts", "Creating an account, signing in, and everything that needs your identity."},
+	{"Core", "Cloud saves", "Backing up and restoring game saves from an emulator or the website."},
+	{"Core", "Messages", "Messages between friends on the website, the phone app and Miiverse."},
+	{"Core", "Game leaderboards", "The shared score boards every console's games post to and read from."},
+	{"Core", "Game achievements", "The trophies and achievements every console earns, kept in one place across consoles."},
+	{"Core", "Game title storage", "The shared place where every console's games keep each player's own data, like progress counters and uploads."},
+	{"Core", "Database connections", "How full the database server is. It stops accepting new connections at its limit."},
+	{"Core", "Network registry", "Where the console and emulator builds fetch their signed bundles from."},
+	{"Core", "Rewards", "Badges, themes and shop items earned across the network."},
+	{"Core", "Parental controls", "Supervision, profiles and the OpenVerse level for children's accounts, on every console."},
+	{"Core", "Voice chat", "Voice sessions for games that offer them."},
+	{"Core", "Mod catalogue", "The catalogue of game mods."},
+	{"Core", "Pokemon HOME", "Account-bound boxes, Pokedex, trading and the Wonder Box."},
+	{"Core", "Pokemon Global Link", "The GTS, battle records and the Global Showcase."},
+	{"Core", "Pokemon legality check", "Checks Pokemon before they are traded."},
+	{"Core", "Pakka assistant", "The Pakka chat assistant on the website and in the app."},
+	{"Core", "Logs pipeline", "Service logs reaching the admin log viewer. Fails when no log line has arrived for 15 minutes."},
+	{"Core", "Console DNS", "The DNS server a console's DNS setting points at."},
+	{"Core", "NAT check, first server (10025)", "Part of the NAT check that decides which online modes a console may use."},
+	{"Core", "NAT check, first server (10125)", "Part of the NAT check that decides which online modes a console may use."},
+	{"Core", "NAT check, second server (10025)", "Part of the NAT check that decides which online modes a console may use."},
+	{"Core", "NAT check, second server (10125)", "Part of the NAT check that decides which online modes a console may use."},
+	{"Core", "Relay (TURN)", "The relay that carries game traffic between players who cannot reach each other directly."},
+	{"Console", "eShop", "The shop front page on the console."},
+	{"Console", "Game downloads", "Where the eShop sends game and update downloads."},
+	{"Console", "Online play and friends", "The connection the console keeps open for friends, presence and invitations."},
+	{"Console", "Parental controls (console)", "The Parental Controls app on the console."},
+	{"Console", "News (BCAT)", "News and daily content pushed to the console."},
+	{"Console", "Album sharing", "Sharing album screenshots and clips to OpenVerse."},
+	{"Switch vendor", "Epic Online Services", "Sign-in and matchmaking for games on Epic's online services."},
+	{"Switch vendor", "Innersloth backend", "Among Us accounts."},
+	{"Switch vendor", "Among Us matchmaker", "Finding and creating Among Us games."},
+	{"Switch vendor", "Klei login", "Don't Starve Together sign-in."},
+	{"Switch vendor", "Klei lobby", "Don't Starve Together server list."},
+	{"Switch vendor", "Team17 directory", "Moving Out 2 and other Team17 games: where to find the game servers."},
+	{"Switch vendor", "Demonware", "Sign-in for games on Demonware."},
+	{"Switch vendor", "Battle.net region service", "Diablo II: Resurrected finds its region here."},
+	{"Switch vendor", "Battle.net account", "Diablo II: Resurrected sign-in."},
+	{"Switch vendor", "Stumble Guys", "Stumble Guys accounts and matchmaking."},
+	{"Switch vendor", "Fall Guys login", "Fall Guys sign-in."},
+	{"Switch vendor", "Photon name server", "Finds the right Photon room server for games built on Photon."},
+	{"Switch vendor", "Minecraft Dungeons", "Minecraft Dungeons online services."},
+	{"Switch vendor", "PlayFab (Astroneer)", "Astroneer sign-in."},
+	{"Switch vendor", "Unrailed", "Unrailed online play."},
+	{"Wii U/3DS", "Account service", "Nintendo Network ID sign-in and account setup."},
+	{"Wii U/3DS", "Account terms", "The terms shown while creating or linking an account."},
+	{"Wii U/3DS", "Account service (Wii U, port 4443)", "The same account service, reached the way a patched Wii U reaches it: by address, on port 4443."},
+	{"Wii U/3DS", "3DS game server list", "The 3DS asks this first, to find the game server."},
+	{"Wii U/3DS", "Connection test", "The page a Nintendo console loads to check that its Wi-Fi works."},
+	{"Wii U/3DS", "Miiverse (API)", "OpenVerse posts and communities on a Wii U or 3DS."},
+	{"Wii U/3DS", "Miiverse (Wii U web)", "The OpenVerse page on a Wii U."},
+	{"Wii U/3DS", "Miiverse (3DS web)", "The OpenVerse page on a 3DS."},
+	{"Wii U/3DS", "SpotPass", "Data a console downloads in the background: news, game content and StreetPass."},
+	{"Wii U/3DS", "eShop", "The Wii U and 3DS shop."},
+	{"Wii U/3DS", "Splatfest results", "Splatoon Splatfest scores."},
+	{"Wii/DS", "DS login", "A Nintendo DS signing in to Wi-Fi Connection."},
+	{"Wii/DS", "Wii login", "A Wii signing in to Wi-Fi Connection."},
+	{"Wii/DS", "Connection test (Wii)", "The page a Wii loads to check that its Wi-Fi works."},
+	{"Wii/DS", "Game downloads (DLS)", "Downloadable content and Wii Message Board items."},
+	{"Wii/DS", "Game stats", "Game statistics and rankings."},
+	{"Wii/DS", "Online data storage (Sake)", "Per-player data games keep on the network."},
+	{"Wii/DS", "Race rankings", "Mario Kart Wii ghost and ranking data."},
+	{"Xbox 360", "Connectivity test", "The page an Xbox 360 loads to check it is online."},
+	{"Xbox 360", "Service status notice", "The service status message shown in the dashboard."},
+	{"Xbox 360", "Dashboard home", "The OpenPak Home screen on the dashboard."},
+	{"Xbox 360", "Live configuration", "The settings an Xbox 360 downloads when it signs in."},
+	{"Xbox 360", "Token service", "Gives a signed-in Xbox 360 the tokens other services ask for."},
+	{"Xbox 360", "Gamer profile (HTTPS)", "Gamer profile requests made over HTTPS."},
+}
+
+func keyOf(group, name string) string {
+	r := strings.NewReplacer("/", "-", "_", "-", ",", "-", ".", "-", " ", "-", "#", "-", "+", "-", "&", "-")
+	return strings.ToLower(r.Replace(group)) + "_" + strings.ToLower(r.Replace(name))
+}
+
+func init() {
+	for _, m := range more {
+		if _, taken := blurb[keyOf(m.group, m.name)]; !taken {
+			blurb[keyOf(m.group, m.name)] = m.text
+		}
+	}
 }
 
 // Human names for the groups, and the order they read in.
 var groups = []struct{ Key, Title, Note string }{
 	{"Public", "On the web", "What you use in a browser or on your phone."},
-	{"Console", "On a console", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
+	{"Sites", "Companion sites", "The sites that go with the games: OpenVerse, Open Kart, SplatNet, Mario Maker, Rewards and the docs."},
+	{"Core", "Core services", "The services every console network shares: accounts, saves, scores, achievements, chat, rewards, parental controls, DNS, the NAT check and the relay."},
+	{"Console", "On a Switch", "What your Switch talks to. These are checked the way a console reaches them, not the way a browser would."},
+	{"Switch NEX", "Switch games (NEX)", "The game session ports for Switch titles that match players through the Nintendo network."},
+	{"Switch NPLN", "Switch games (NPLN)", "The game session ports for Switch titles that use Nintendo's newer online service."},
+	{"Switch vendor", "Switch games with their own servers", "Games whose online play is run by their publisher or an engine vendor, answered here by their own names."},
+	{"Wii U/3DS", "On a Wii U or 3DS", "Accounts, Miiverse, SpotPass and the shop, then each game's session port."},
+	{"Wii/DS", "On a Wii or DS", "Wi-Fi Connection: sign-in, downloads, game stats and the matchmaking ports."},
 	{"Xbox 360", "On an Xbox 360", "Xbox Live services an Xbox 360 reaches through the OpenPak gateway."},
 	{"PS3", "On a PS3", "PlayStation Network services a PS3 reaches, checked by the console's own host names."},
 	{"PS4", "On a PS4", "PlayStation Network services a PS4 reaches, checked by the console's own host names."},
@@ -106,6 +213,11 @@ type bar struct {
 type groupView struct {
 	Title, Note string
 	Services    []service
+	// Ports are the generated game-session-port checks: one line each, folded unless one is down.
+	Ports   []service
+	Fold    bool
+	Working int
+	Total   int
 }
 
 type pageView struct {
@@ -253,17 +365,51 @@ func fetchRegions(client *http.Client) []region {
 // few enough to stay legible on a phone.
 const barCount = 40
 
-// generatedName matches the endpoints cmd/gen-gatus adds ("wfc-gpcm 29900/tcp").
-// They are for operators on the Gatus dashboard; the public page lists only the
-// hand-written checks, so a flapping UDP port cannot change the headline.
-var generatedName = regexp.MustCompile(` \d+/(tcp|udp)$`)
+// generatedName matches the endpoints cmd/gen-gatus adds ("wfc-gpcm 29900/tcp", "switch-arms secure 22141/tcp").
+var generatedName = regexp.MustCompile(`^(.+?)( secure)? \d+/(tcp|udp)$`)
+
+// friendly names the units whose slug does not read well; everything else is title-cased.
+var friendly = map[string]string{
+	"wfc-gamestats": "Game stats", "wfc-gpcm": "Friends and profiles", "wfc-gpsp": "Friend search",
+	"wfc-natneg": "Connection setup", "wfc-qr2": "Matchmaking", "wfc-serverbrowser": "Server browser",
+	"nn-friends": "Friends", "wiiu-chat": "Wii U chat", "np-matching2-recorder": "Matchmaking",
+	"xb-auth": "Sign-in (Kerberos)", "np-community": "Friends", "among-us": "Among Us",
+	"fall-guys-round": "Fall Guys rounds", "spelunky2": "Spelunky 2", "photon": "Photon", "playfab": "PlayFab",
+}
+
+var words = map[string]string{
+	"3ds": "3DS", "wiiu": "Wii U", "tmnt": "TMNT", "f1": "F1", "ii": "II", "of": "of", "the": "the", "to": "to",
+	"vs": "vs", "and": "and", "a": "a", "in": "in", "iv": "IV", "xx": "XX", "hff": "HFF", "mk8d": "MK8D",
+}
+
+// prettify turns a unit slug into a name a player would recognise.
+func prettify(slug string) string {
+	if n, ok := friendly[slug]; ok {
+		return n
+	}
+	slug = strings.TrimPrefix(slug, "switch-")
+	parts := strings.Split(slug, "-")
+	for i, w := range parts {
+		if r, ok := words[w]; ok {
+			parts[i] = r
+		} else if w != "" {
+			parts[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(parts, " ")
+}
 
 func build(eps []gatusEndpoint) *pageView {
 	byGroup := map[string][]service{}
+	portsBy := map[string][]service{}
 	var down, total int
 	for _, e := range eps {
-		if len(e.Results) == 0 || generatedName.MatchString(e.Name) {
+		if len(e.Results) == 0 {
 			continue
+		}
+		name, bl := e.Name, blurb[e.Key]
+		if m := generatedName.FindStringSubmatch(e.Name); m != nil {
+			name, bl = prettify(m[1]), ""
 		}
 		last := e.Results[len(e.Results)-1]
 		total++
@@ -288,15 +434,22 @@ func build(eps []gatusEndpoint) *pageView {
 				ok++
 			}
 		}
-		byGroup[e.Group] = append(byGroup[e.Group], service{
-			Name:    e.Name,
-			Blurb:   blurb[e.Key],
+		isPort := generatedName.MatchString(e.Name)
+		sv := service{
+			Name:    name,
+			Blurb:   bl,
 			Up:      last.Success,
 			Uptime:  float64(ok) / float64(len(e.Results)) * 100,
 			Latency: fmt.Sprintf("%d ms", last.Duration/int64(time.Millisecond)),
 			Checked: humanSince(last.Timestamp),
 			Bars:    bars,
-		})
+		}
+		if isPort {
+			sv.Bars = nil
+			portsBy[e.Group] = append(portsBy[e.Group], sv)
+		} else {
+			byGroup[e.Group] = append(byGroup[e.Group], sv)
+		}
 	}
 
 	view := &pageView{
@@ -319,12 +472,24 @@ func build(eps []gatusEndpoint) *pageView {
 	}
 
 	for _, g := range groups {
-		s := byGroup[g.Key]
-		if len(s) == 0 {
+		s, ports := byGroup[g.Key], portsBy[g.Key]
+		if len(s)+len(ports) == 0 {
 			continue
 		}
 		sort.Slice(s, func(i, j int) bool { return s[i].Name < s[j].Name })
-		view.Groups = append(view.Groups, groupView{Title: g.Title, Note: g.Note, Services: s})
+		sort.Slice(ports, func(i, j int) bool { return ports[i].Name < ports[j].Name })
+		gv := groupView{Title: g.Title, Note: g.Note, Services: s, Ports: ports, Fold: true, Total: len(s) + len(ports)}
+		for _, sv := range append(append([]service{}, s...), ports...) {
+			if sv.Up {
+				gv.Working++
+			}
+		}
+		for _, sv := range ports {
+			if !sv.Up {
+				gv.Fold = false
+			}
+		}
+		view.Groups = append(view.Groups, gv)
 	}
 	return view
 }

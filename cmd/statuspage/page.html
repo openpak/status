@@ -71,6 +71,12 @@ h2 + p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
 .bars i.down { background: var(--bad); opacity: 1; }
 .meta { display: flex; gap: 14px; margin-top: 8px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
 
+h2 .count { float: right; text-transform: none; letter-spacing: 0; font-weight: 500; }
+details.ports { margin-top: 10px; }
+details.ports > summary { cursor: pointer; color: var(--accent); font-size: 14px; padding: 6px 0; }
+details.ports[open] > summary { margin-bottom: 6px; }
+.port { display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 14px; }
+.port:first-child { border-top: 0; }
 footer { margin: 36px 0 8px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 </style>
 </head>
@@ -104,8 +110,9 @@ footer { margin: 36px 0 8px; color: var(--muted); font-size: 13px; line-height: 
   {{end}}
 
   {{range .Groups}}
-    <h2>{{.Title}}</h2>
+    <h2>{{.Title}} <span class="count">{{.Working}} of {{.Total}} working</span></h2>
     <p>{{.Note}}</p>
+    {{if .Services}}
     <div class="card">
       {{range .Services}}
       <div class="svc">
@@ -125,6 +132,20 @@ footer { margin: 36px 0 8px; color: var(--muted); font-size: 13px; line-height: 
       </div>
       {{end}}
     </div>
+    {{end}}
+    {{if .Ports}}
+    <details class="ports"{{if not .Fold}} open{{end}}>
+      <summary>{{if .Services}}Game session ports{{else}}Games{{end}} ({{len .Ports}})</summary>
+      <div class="card">
+        {{range .Ports}}
+        <div class="port" title="{{printf "%.1f" .Uptime}}% over the {{$.Window}}, checked {{.Checked}}">
+          <span class="svc-name">{{.Name}}</span>
+          <span class="state {{if .Up}}up{{else}}down{{end}}">{{if .Up}}Working{{else}}Not responding{{end}}</span>
+        </div>
+        {{end}}
+      </div>
+    </details>
+    {{end}}
   {{end}}
 
   <footer>

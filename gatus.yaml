@@ -49,7 +49,7 @@ endpoints:
       - "[BODY] == pat(*\"games\"*)"
 
   - name: Accounts
-    group: Public
+    group: Core
     url: https://api.openpak.org/healthz/core
     interval: 60s
     conditions:
@@ -68,21 +68,21 @@ endpoints:
   # website answers for them: /healthz/<service> runs the service's own health
   # check and says up (200) or down (503).
   - name: Cloud saves
-    group: Public
+    group: Core
     url: https://openpak.org/healthz/saves
     interval: 120s
     conditions:
       - "[STATUS] == 200"
 
   - name: Messages
-    group: Public
+    group: Core
     url: https://openpak.org/healthz/chat
     interval: 120s
     conditions:
       - "[STATUS] == 200"
 
   - name: Game leaderboards
-    group: Public
+    group: Core
     # The neutral leaderboards core every console's score server stores into.
     url: https://openpak.org/healthz/leaderboards
     interval: 120s
@@ -90,7 +90,7 @@ endpoints:
       - "[STATUS] == 200"
 
   - name: Game achievements
-    group: Public
+    group: Core
     # The neutral achievements core behind every console's trophies and achievements.
     url: https://openpak.org/healthz/achievements
     interval: 120s
@@ -98,7 +98,7 @@ endpoints:
       - "[STATUS] == 200"
 
   - name: Game title storage
-    group: Public
+    group: Core
     # The neutral title storage core behind every console's per-game player data.
     url: https://openpak.org/healthz/title-storage
     interval: 120s
@@ -106,7 +106,7 @@ endpoints:
       - "[STATUS] == 200"
 
   - name: Database connections
-    group: Public
+    group: Core
     # Postgres client connections: the website answers 503 from 240, which is 80% of max_connections=300.
     url: https://openpak.org/healthz/db-connections
     interval: 120s
@@ -587,6 +587,765 @@ endpoints:
     interval: 120s
     conditions:
       - "[CONNECTED] == true"
+
+  # ---- The public site: every page and API a person or the app uses ----
+
+  - name: Sign-in page
+    group: Public
+    url: https://openpak.org/login
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Account registration
+    group: Public
+    url: https://openpak.org/register
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Titles catalogue
+    group: Public
+    # The catalogue the titles page, the app and the emulators read.
+    url: https://openpak.org/api/v1/titles
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*\"titles\"*)"
+
+  - name: Downloads
+    group: Public
+    url: https://openpak.org/downloads
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Help centre
+    group: Public
+    url: https://openpak.org/help
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: App API
+    group: Public
+    # api.openpak.org is the host the phone app and the emulators call.
+    url: https://api.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*\"service\":\"website\"*)"
+
+  - name: Network profile
+    group: Public
+    # What the app and the console patchers download to learn which hosts to redirect.
+    url: https://openpak.org/api/v1/network/profile
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*\"version\"*)"
+
+  - name: Redirect ceiling
+    group: Public
+    # The signed list of names a console may be redirected for. A 404 here drops whole families from console DNS at its next boot.
+    url: https://openpak.org/api/v1/network/ceiling
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*payload*)"
+
+  - name: Network CA certificate
+    group: Public
+    url: https://openpak.org/ca.pem
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*BEGIN CERTIFICATE*)"
+
+  - name: Companion data
+    group: Public
+    url: https://openpak.org/api/v1/companion/titles
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*\"titles\"*)"
+
+  - name: News feed
+    group: Public
+    url: https://openpak.org/feed/news.xml
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*<feed*)"
+
+  - name: Regions list
+    group: Public
+    url: https://openpak.org/api/v1/regions
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*\"regions\"*)"
+
+  - name: Logs viewer
+    group: Public
+    # The admin log viewer answers with a redirect to sign-in: the route is up and behind its gate.
+    url: https://openpak.org/admin/logs
+    interval: 120s
+    client:
+      ignore-redirect: true
+    conditions:
+      - "[STATUS] == 303"
+
+  # ---- Companion sites ----
+
+  - name: OpenVerse
+    group: Sites
+    # verse.openpak.org: the Miiverse replacement.
+    url: https://verse.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: OpenVerse Lite
+    group: Sites
+    # lite.verse.openpak.org is plain HTTP on our own edge for the PS3, Wii and DSi browsers; their DNS resolves it to the box, so the probe goes straight to the origin with that Host.
+    url: http://145.241.199.19/
+    headers:
+      Host: lite.verse.openpak.org
+    interval: 120s
+    client:
+      ignore-redirect: true
+    conditions:
+      - "[STATUS] == 302"
+
+  - name: Open Kart
+    group: Sites
+    url: https://kart.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: SplatNet
+    group: Sites
+    url: https://splat.openpak.org/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 3000"
+
+  - name: Mario Maker courses
+    group: Sites
+    # Also reports when each game's course sync last succeeded.
+    url: https://maker.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].ok == true"
+
+  - name: Rewards
+    group: Sites
+    url: https://rewards.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: Documentation
+    group: Sites
+    url: https://docs.openpak.org/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  # ---- Core services every network shares ----
+
+  - name: Network registry
+    group: Core
+    # The v2 registry the console and emulator builds fetch their bundles from.
+    url: https://openpak.org/healthz/registry
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Rewards
+    group: Core
+    url: https://openpak.org/healthz/rewards
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Parental controls
+    group: Core
+    # The neutral parental core that nx-pctl and OpenVerse read.
+    url: https://openpak.org/healthz/parental
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Voice chat
+    group: Core
+    url: https://openpak.org/healthz/voice
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Mod catalogue
+    group: Core
+    url: https://openpak.org/healthz/mods
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Pokemon HOME
+    group: Core
+    url: https://openpak.org/healthz/pokemon-home
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Pokemon Global Link
+    group: Core
+    url: https://openpak.org/healthz/pokemon-global-link
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Pokemon legality check
+    group: Core
+    url: https://openpak.org/healthz/pokemon-legality
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Pakka assistant
+    group: Core
+    # The website's own path to Pakka (it runs on the status host), which is the one chat uses.
+    url: https://openpak.org/healthz/pakka
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Logs pipeline
+    group: Core
+    # 503 when the newest stored log line is more than 15 minutes old: openpak-logd or the ingest route has stopped.
+    url: https://openpak.org/healthz/logs
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Console DNS
+    group: Core
+    # nn-sssl-dns answers OpenPak names with the box. Only an OpenPak name is ever asked, so the lockdown stays shut.
+    url: 145.241.199.19
+    dns:
+      query-name: account.openpak.org
+      query-type: A
+    interval: 120s
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+      - "[BODY] == 145.241.199.19"
+
+  - name: NAT check, first server (10025)
+    group: Core
+    # nn-nncs for the Switch, Wii U and 3DS. A console needs two servers on two addresses, each on 10025 and 10125; the probe is a bare UDP dial, so it sees a closed port and not a stopped process.
+    url: udp://145.241.199.19:10025
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: NAT check, first server (10125)
+    group: Core
+    url: udp://145.241.199.19:10125
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: NAT check, second server (10025)
+    group: Core
+    url: udp://145.241.228.207:10025
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: NAT check, second server (10125)
+    group: Core
+    url: udp://145.241.228.207:10125
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Relay (TURN)
+    group: Core
+    # coturn for NPLN titles, reached over UDP (the consoles' TURN URL says transport=udp; TCP 3478 is not open to the
+    # internet). A bare UDP dial only sees a closed port, since Gatus cannot send a STUN request.
+    url: udp://145.241.199.19:3478
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+
+  # ---- A Switch: the OpenPak services behind the Nintendo names ----
+
+  - name: eShop
+    group: Console
+    # The shop front page nx-shop renders.
+    url: https://hac.lp1.savanna.srv.nintendo.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 1000"
+
+  - name: Game downloads
+    group: Console
+    # nx-shop's content host answers an unknown route in its own words.
+    url: https://atum.hac.lp1.d4c.nintendo.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*no such content route*)"
+
+  - name: Online play and friends
+    group: Console
+    # nx-penne's frontline refuses a connection without a login ticket, which proves it is the service answering.
+    url: https://fro-3.hac.lp1.penne.srv.nintendo.net/
+    method: POST
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 401"
+      - "[BODY] == pat(*login ticket*)"
+
+  - name: Parental controls (console)
+    group: Console
+    url: https://api-lp1.pctl.srv.nintendo.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].status == available"
+
+  - name: News (BCAT)
+    group: Console
+    url: https://bcat-list-lp1.cdn.nintendo.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*no such bcat route*)"
+
+  - name: Album sharing
+    group: Console
+    url: https://web-lp1.share.srv.nintendo.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 1000"
+
+  # ---- Switch game backends that live behind a vendor's own name ----
+
+  - name: Epic Online Services
+    group: Switch vendor
+    url: https://api.epicgames.dev/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*errors.com.epicgames*)"
+
+  - name: Innersloth backend
+    group: Switch vendor
+    url: https://backend.innersloth.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 401"
+
+  - name: Among Us matchmaker
+    group: Switch vendor
+    url: https://matchmaker.among.us/healthz
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: Klei login
+    group: Switch vendor
+    url: https://login.kleientertainment.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*\"error\"*)"
+
+  - name: Klei lobby
+    group: Switch vendor
+    url: https://lobby-v2.klei.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*\"error\"*)"
+
+  - name: Team17 directory
+    group: Switch vendor
+    url: https://directory.t17service.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*AllowXPlay*)"
+
+  - name: Demonware
+    group: Switch vendor
+    # demonware's auth server has no page of its own; a TLS handshake and its 404 mean it is routed and running.
+    url: https://prod.umbrella.demonware.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+
+  - name: Battle.net region service
+    group: Switch vendor
+    url: https://geo.battle.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*datacenter_region*)"
+
+  - name: Battle.net account
+    group: Switch vendor
+    url: https://account.battle.net/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Stumble Guys
+    group: Switch vendor
+    url: https://api.stumbleguys.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Fall Guys login
+    group: Switch vendor
+    url: https://login.fallguys.oncatapult.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*NotFound*)"
+
+  - name: Photon name server
+    group: Switch vendor
+    url: https://ns.photonengine.io/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 400"
+
+  - name: Minecraft Dungeons
+    group: Switch vendor
+    url: https://api.minecraftservices.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+      - "[BODY] == pat(*not served by OpenPak*)"
+
+  - name: PlayFab (Astroneer)
+    group: Switch vendor
+    url: https://5ea1.playfabapi.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+
+  - name: Unrailed
+    group: Switch vendor
+    url: https://unrailed-online.com:8443/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 404"
+
+  # ---- A Wii U or 3DS: the OpenPak names the patched consoles use ----
+
+  - name: Account service
+    group: Wii U/3DS
+    url: https://account.openpak.org/healthz
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*nn-account*)"
+
+  - name: Account terms
+    group: Wii U/3DS
+    # A real account request: it reaches nn-account's database-backed handlers.
+    url: https://account.openpak.org/v1/api/content/agreements/Nintendo-Network-EULA/US/@latest
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*<agreements>*)"
+
+  - name: Account service (Wii U, port 4443)
+    group: Wii U/3DS
+    # The Wii U reaches the same service by the box's address on port 4443 (IP-literal, path-routed).
+    url: https://145.241.199.19:4443/v1/api/content/agreements/Nintendo-Network-EULA/US/@latest
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*<agreements>*)"
+
+  - name: 3DS game server list
+    group: Wii U/3DS
+    # nn-account's NASC answer.
+    url: https://nasc.openpak.org/ac
+    method: POST
+    body: "x"
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*returncd=*)"
+
+  - name: Connection test
+    group: Wii U/3DS
+    url: http://conntest.openpak.org/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*HTML Page*)"
+
+  - name: Miiverse (API)
+    group: Wii U/3DS
+    url: https://api.olv.openpak.org/healthz
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].ok == true"
+
+  - name: Miiverse (Wii U web)
+    group: Wii U/3DS
+    url: https://portal.olv.openpak.org/healthz
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].ok == true"
+
+  - name: Miiverse (3DS web)
+    group: Wii U/3DS
+    url: https://ctr.olv.openpak.org/healthz
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].ok == true"
+
+  - name: SpotPass
+    group: Wii U/3DS
+    # nn-boss; the policy list is served out of its bucket.
+    url: https://nppl.app.openpak.org/p01/policylist/1/1/US
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*<PolicyList>*)"
+
+  - name: eShop
+    group: Wii U/3DS
+    # nn-soap answers a junk SOAP body with its own error page. A stopped container would be a 502 from Traefik.
+    url: https://ecs.wup.shop.openpak.org/ecs/services/ECommerceSOAP
+    method: POST
+    body: "x"
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 500"
+      - "[BODY] == pat(*<!DOCTYPE html>*)"
+
+  - name: Splatfest results
+    group: Wii U/3DS
+    # judd answers an empty upload with a bare 500 from its own error handler; a stopped container would be a 502.
+    url: https://wup-agmj.app.openpak.org/post
+    method: POST
+    body: "x"
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 500"
+      - "[BODY] == error"
+
+  # ---- A Wii or DS: Wiimmfi-style Nintendo WFC ----
+
+  - name: DS login
+    group: Wii/DS
+    # An action=login request with no credentials: wfc-nas answers returncd=103 (MTAz).
+    url: http://nas.openpak.org/ac
+    method: POST
+    body: "action=bG9naW4*"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*returncd=*)"
+
+  - name: Wii login
+    group: Wii/DS
+    url: http://naswii.openpak.org/ac
+    method: POST
+    body: "action=bG9naW4*"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*returncd=*)"
+
+  - name: Connection test (Wii)
+    group: Wii/DS
+    url: http://conntest.openpak.org/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*HTML Page*)"
+
+  - name: Game downloads (DLS)
+    group: Wii/DS
+    url: http://dls1.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: Game stats
+    group: Wii/DS
+    url: http://mariokartwii.gamestats.gs.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: Online data storage (Sake)
+    group: Wii/DS
+    url: http://mariokartwii.sake.gs.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  - name: Race rankings
+    group: Wii/DS
+    url: http://mariokartwii.race.gs.openpak.org/healthz
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(ok*)"
+
+  # ---- An Xbox 360: the rest of the dashboard and sign-in ----
+
+  - name: Connectivity test
+    group: Xbox 360
+    url: http://145.241.199.19/XBOXNCSI.txt
+    headers:
+      Host: xncsi.xboxlive.com
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(Xbox NCSI*)"
+
+  - name: Service status notice
+    group: Xbox 360
+    url: http://145.241.199.19/xocdata/xml/en-US/servicestatusChannel.xml
+    headers:
+      Host: notice.xbox.com
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*RootNode*)"
+
+  - name: Dashboard home
+    group: Xbox 360
+    # x360-dashboard: the signed Home manifest.
+    url: http://145.241.199.19/epix/en-US/dashhome.xml
+    headers:
+      Host: content.xboxlive.com
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 1000"
+
+  - name: Live configuration
+    group: Xbox 360
+    url: http://145.241.199.19/liveinfo/GetLiveConfig.ashx
+    interval: 120s
+    # The body is UTF-16 text, so it is checked by size, not by pattern.
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 100"
+
+  - name: Token service
+    group: Xbox 360
+    # An empty request: x360-xsts names what it is missing.
+    url: http://145.241.199.19/xsts/xsts.svc/IWSTrust13
+    method: POST
+    interval: 120s
+    conditions:
+      - "[STATUS] == 400"
+      - "[BODY] == pat(*no xuid or device claim*)"
+
+  - name: Gamer profile (HTTPS)
+    group: Xbox 360
+    url: https://profile.xboxlive.com/
+    interval: 120s
+    client:
+      insecure: true
+    conditions:
+      - "[STATUS] == 401"
 
 # >>> generated by cmd/gen-gatus from the production quadlets. Do not edit by hand; re-run the tool.
 # One TCP connect (or UDP dial) per unit, against the first external port; the
@@ -1233,14 +1992,6 @@ endpoints:
     conditions:
       - "[CONNECTED] == true"
 
-  # ---- generated: PS3 ----
-  - name: np-community 5223/tcp
-    group: PS3
-    url: tcp://145.241.199.19:5223
-    interval: 120s
-    conditions:
-      - "[CONNECTED] == true"
-
   # ---- generated: Original Xbox ----
   - name: xb-auth 88/udp
     group: Original Xbox
@@ -1251,6 +2002,7 @@ endpoints:
 
 # Not externally probeable (skipped):
 #   account (only ports bound to a specific address)
+#   achievements (only ports bound to a specific address)
 #   astroneer (no published port)
 #   battlenet (only ports bound to a specific address)
 #   bcat (only ports bound to a specific address)
@@ -1262,6 +2014,7 @@ endpoints:
 #   fall-guys (no published port)
 #   judd (no published port)
 #   klei (no published port)
+#   leaderboards (only ports bound to a specific address)
 #   mailpit (only ports bound to a specific address)
 #   mario-maker (only ports bound to a specific address)
 #   minecraft-dungeons (no published port)
@@ -1278,15 +2031,21 @@ endpoints:
 #   nn-soap (no published port)
 #   nn-sssl-dns (host network, ports not declared)
 #   np-account (no published port)
+#   np-community (already checked by hand: tcp://145.241.199.19:5223)
+#   np-matching2-recorder (capture-only recorder, started by hand and not meant to run)
 #   np-score (no published port)
 #   np-trophy (no published port)
 #   np-tus (no published port)
+#   np-ubs (no published port)
+#   np-update (no published port)
+#   np-uploader (no published port)
 #   nx-baas (excluded with -exclude)
 #   nx-bcat (no published port)
 #   nx-pctl (no published port)
 #   nx-penne (no published port)
 #   nx-share (no published port)
 #   nx-shop (no published port)
+#   openverse (only ports bound to a specific address)
 #   pakka (only ports bound to a specific address)
 #   parental (no published port)
 #   pikmin-3-histgrm (no published port)
@@ -1294,6 +2053,7 @@ endpoints:
 #   pokemon-home (only ports bound to a specific address)
 #   pokemon-legality (no published port)
 #   postgres (no published port)
+#   ps4-update (no published port)
 #   qw-cloudflared (host network, ports not declared)
 #   redis (no published port)
 #   registry (only ports bound to a specific address)
@@ -1311,8 +2071,10 @@ endpoints:
 #   switch-streets-of-rage-4 (already checked by hand: tcp://145.241.199.19:22881)
 #   t17 (no published port)
 #   terraria (already checked by hand: tcp://145.241.199.19:24540)
+#   title-storage (only ports bound to a specific address)
 #   traefik (only ports bound to a specific address)
 #   turn (host network, ports not declared)
+#   ugs (no published port)
 #   unrailed (no published port)
 #   voice (only ports bound to a specific address)
 #   website (only ports bound to a specific address)
@@ -1328,21 +2090,29 @@ endpoints:
 #   x360-notice (no published port)
 #   x360-profile (no published port)
 #   x360-progress (no published port)
+#   x360-som (no published port)
 #   x360-store (no published port)
 #   x360-xarb (no published port)
 #   x360-xbos (no published port)
 #   x360-xedl (no published port)
 #   x360-xmatch (no published port)
+#   x360-xmessaging (no published port)
 #   x360-xpnfront (no published port)
 #   x360-xsig (no published port)
 #   x360-xstats (no published port)
 #   x360-xsts (no published port)
 #   x360-xuacs (only ports bound to a specific address)
 #   xb-account (only ports bound to a specific address)
+#   xb-autoupd (only ports bound to a specific address)
 #   xb-dns (host network, ports not declared)
 #   xb-enroll (only ports bound to a specific address)
+#   xb-fbserver (only ports bound to a specific address)
+#   xb-msgserver (only ports bound to a specific address)
 #   xb-social (only ports bound to a specific address)
+#   xb-stfd (only ports bound to a specific address)
 #   xb-tou (only ports bound to a specific address)
 #   xb-voice (only ports bound to a specific address)
+#   xb-xmessaging (only ports bound to a specific address)
+#   xb-xsig (only ports bound to a specific address)
 #   xbl (no published port)
 # <<< end generated

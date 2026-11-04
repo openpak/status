@@ -26,9 +26,10 @@ var groupOrder = []string{"Core", "Switch infra", "Switch NEX", "Switch NPLN", "
 	"Wii U/3DS", "Wii/DS", "PS3", "Xbox 360", "Original Xbox", "Infra"}
 
 var notServices = map[string]string{
-	"openpak-switch-bridge":   "loopback bridge, not a service",
-	"openpak-edge":            "public TCP relay to Traefik, covered by the Console checks",
-	"openpak-switch-honeypot": "handshake honeypot, no health to watch",
+	"openpak-switch-bridge":         "loopback bridge, not a service",
+	"openpak-edge":                  "public TCP relay to Traefik, covered by the Console checks",
+	"openpak-switch-honeypot":       "handshake honeypot, no health to watch",
+	"openpak-np-matching2-recorder": "capture-only recorder, started by hand and not meant to run",
 }
 
 var (

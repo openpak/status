@@ -3,6 +3,14 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.2.0
+
+- The page and `/api/status` show every check, in thirteen groups: On the web, Companion sites, Core services, On a Switch, Switch games (NEX), Switch games (NPLN), Switch games with their own servers, On a Wii U or 3DS, On a Wii or DS, Xbox 360, PS3, PS4, original Xbox. The generated game-session-port checks are listed too (friendly names, one line each, folded unless one is down) and count in the headline; each group says "N of M working". `/api/status` carries them as `Ports`.
+- 248 checks, up from 168. New: the public site's pages and APIs (sign-in, registration, titles, downloads, help, app API, network profile, redirect ceiling, CA, companion data, news feed, regions, logs viewer gate); companion sites (OpenVerse, Lite, Open Kart, SplatNet, Mario Maker, Rewards, docs); core services (registry, rewards, parental, voice, mods, Pokemon HOME / Global Link / legality, Pakka, logs pipeline, console DNS by a DNS query for an OpenPak name, the four NAT check ports, TURN); Switch (eShop, game downloads, penne, parental, BCAT, album sharing) and vendor backends (Epic, Innersloth, Among Us, Klei, Team17, Demonware, Battle.net, Stumble Guys, Fall Guys, Photon, Minecraft Dungeons, PlayFab, Unrailed); Wii U/3DS (account incl. the IP-literal port 4443, NASC, connection test, OpenVerse, SpotPass, shop, Splatfest); Wii/DS (DS and Wii login, DLS, game stats, Sake, race); Xbox 360 (connectivity test, service status, dashboard home, Live configuration, token service, profile).
+- The account, saves, chat, leaderboards, achievements, title storage and database checks moved from Public to Core services.
+- `gen-gatus` skips `np-matching2-recorder` (capture-only, started by hand).
+- The container maps the extra third-party names to the origin (`PodmanArgs`).
+
 ## v0.1.24
 
 - Console group: Unity sign-in and Unity lobby checks for Gang Beasts (ugs); the prober maps the two Unity names to the origin.
