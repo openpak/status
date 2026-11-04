@@ -9,6 +9,7 @@
 package main
 
 import (
+	"embed"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,9 @@ import (
 
 //go:embed icon.svg
 var icon []byte
+
+//go:embed fonts/*.woff2
+var fontFS embed.FS
 
 //go:embed page.html
 var pageHTML string
@@ -221,6 +225,17 @@ func main() {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	mux := http.NewServeMux()
+	// The same rounded UI face openpak.org uses, self-hosted so this page needs nothing else.
+	mux.HandleFunc("GET /fonts/{name}", func(w http.ResponseWriter, r *http.Request) {
+		b, err := fontFS.ReadFile("fonts/" + r.PathValue("name"))
+		if err != nil || !strings.HasSuffix(r.PathValue("name"), ".woff2") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "font/woff2")
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		_, _ = w.Write(b)
+	})
 	mux.HandleFunc("GET /icon.svg", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml")
 		w.Header().Set("Cache-Control", "public, max-age=86400")

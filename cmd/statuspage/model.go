@@ -54,6 +54,7 @@ type pageView struct {
 	Networks      []Network
 	Groups        []legacyGroup
 	Problems      []string // "Switch: eShop" ... for anything that has the website's attention
+	Issues        []Issue  // the same, structured, so openpak.org can group them and use its own game names
 	Down, Total   int
 	Generated     string
 	Window        string
@@ -78,6 +79,43 @@ var legacyTitles = []struct{ Key, Title string }{
 	{"Switch NEX", "Switch games (NEX)"}, {"Switch NPLN", "Switch games (NPLN)"}, {"Switch vendor", "Switch games with their own servers"},
 	{"Wii U/3DS", "On a Wii U or 3DS"}, {"Wii/DS", "On a Wii or DS"}, {"Xbox 360", "On an Xbox 360"}, {"PS3", "On a PS3"},
 	{"PS4", "On a PS4"}, {"Original Xbox", "On an original Xbox"},
+}
+
+// Issue is one failing check: its network's title, its name, and whether it is a game server.
+type Issue struct {
+	Network, Name string
+	Game          bool
+}
+
+// groupIssues reads failing checks as "Switch: eShop and Arms; Wii U / 3DS: eShop", each network once.
+func groupIssues(is []Issue, perNet int) string {
+	var order []string
+	by := map[string][]string{}
+	for _, i := range is {
+		if _, ok := by[i.Network]; !ok {
+			order = append(order, i.Network)
+		}
+		by[i.Network] = append(by[i.Network], i.Name)
+	}
+	var parts []string
+	for _, n := range order {
+		names := by[n]
+		extra := 0
+		if len(names) > perNet {
+			extra, names = len(names)-perNet, names[:perNet]
+		}
+		var s string
+		switch {
+		case extra > 0:
+			s = strings.Join(names, ", ") + fmt.Sprintf(" and %d more", extra)
+		case len(names) > 1:
+			s = strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
+		default:
+			s = names[0]
+		}
+		parts = append(parts, n+": "+s)
+	}
+	return strings.Join(parts, "; ")
 }
 
 type check struct {
@@ -331,13 +369,16 @@ func build(eps []gatusEndpoint) *pageView {
 	default:
 		v.State = "some"
 		v.Headline = fmt.Sprintf("%d %s having problems", down, map[bool]string{true: "thing is", false: "things are"}[down == 1])
-		v.Sub = fmt.Sprintf("%d of %d checks did not answer. Open the highlighted networks for details.", down, total)
+		v.Sub = groupIssues(v.Issues, 3)
 	}
 	for _, n := range v.Networks {
 		for _, c := range n.Cats {
 			for _, r := range c.Rows {
-				if !r.Up && len(v.Problems) < 8 {
-					v.Problems = append(v.Problems, n.Title+": "+r.Name)
+				if !r.Up {
+					v.Issues = append(v.Issues, Issue{Network: n.Title, Name: r.Name, Game: strings.HasSuffix(c.Title, "game servers") || c.Title == "Game servers"})
+					if len(v.Problems) < 8 {
+						v.Problems = append(v.Problems, n.Title+": "+r.Name)
+					}
 				}
 			}
 		}

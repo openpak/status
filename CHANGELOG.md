@@ -5,6 +5,8 @@ of truth; this file is the readable summary.
 
 ## v0.3.0
 
+- Same type as openpak.org: the M PLUS Rounded UI face is self-hosted (`/fonts/`, embedded) and the page uses the site's type scale, with a "Service status" heading and lede like the site's pages.
+- The problem sentence groups by network ("Switch: eShop and Arms; Wii U / 3DS: eShop"); `/api/status` also carries `Issues` (network, name, whether it is a game server) so openpak.org can group them and use the catalogue's game names.
 - One status design. The page is a drill-down: a row per console network (Switch, Wii U / 3DS, Wii / DS, Xbox 360, Original Xbox, PlayStation 3, PlayStation 4), then Shared services and Websites. Opening a network shows its categories (Services, Game servers, Third-party game servers, ...), and opening a category shows the individual checks with status, an uptime strip with a hover tooltip, uptime percentage, latency and last check. Every level shows the worst state beneath it (Operational, Partly down, Down), and a failing path opens by itself while everything else stays collapsed. Search opens the matching path; `#switch/game-servers` deep links open theirs. Real `<details>` controls: keyboard operable and working without scripting.
 - `/api/status` now answers with `Networks` (rolled up, with categories and rows), `Problems` ("Switch: eShop") and `Down`; the old `Groups` field stays for the network map. openpak.org/status reads the roll-ups.
 - `shared/`: the badge, banner, card and uptime-strip styles and the icon sprite, used by this page and copied byte for byte into the website (`scripts/sync-status-shared.sh` there; its tests fail on drift). Status colour is always paired with an icon and a word.

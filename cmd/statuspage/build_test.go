@@ -106,6 +106,12 @@ func TestRollupAndOpenPath(t *testing.T) {
 	if len(v.Groups) != 3 {
 		t.Errorf("legacy groups kept for the network map: %+v", v.Groups)
 	}
+	if got := groupIssues([]Issue{{"Switch", "eShop", false}, {"Switch", "ARMS", true}, {"Wii U / 3DS", "eShop", false}}, 3); got != "Switch: eShop and ARMS; Wii U / 3DS: eShop" {
+		t.Errorf("grouped: %q", got)
+	}
+	if len(v.Issues) != 1 || !v.Issues[0].Game {
+		t.Errorf("issues: %+v", v.Issues)
+	}
 	if len(v.Problems) != 1 || v.Problems[0] != "Switch: Arms" {
 		t.Errorf("problems: %v", v.Problems)
 	}

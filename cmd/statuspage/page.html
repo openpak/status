@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="60">
-<title>OpenPak status</title>
+<title>Service status · OpenPak</title>
 <meta name="description" content="Is OpenPak working? Every network and service, checked from outside.">
 <meta property="og:title" content="OpenPak status"><meta property="og:type" content="website">
+<link rel="preload" href="/fonts/mplus-rounded-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <style>
+@font-face { font-family: "M PLUS Rounded 1c"; font-weight: 500; font-display: swap; src: url(/fonts/mplus-rounded-500.woff2) format("woff2"); }
+@font-face { font-family: "M PLUS Rounded 1c"; font-weight: 700; font-display: swap; src: url(/fonts/mplus-rounded-700.woff2) format("woff2"); }
+@font-face { font-family: "M PLUS Rounded 1c"; font-weight: 800; font-display: swap; src: url(/fonts/mplus-rounded-800.woff2) format("woff2"); }
 /* openpak.org's tokens, so this page is recognisably the same product. Light and dark follow the
    reader's system setting. The shared component styles come from the same file openpak.org uses. */
 :root {
@@ -37,15 +41,17 @@
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: max(1rem, 16px)/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; -webkit-font-smoothing: antialiased; }
 a { color: var(--accent); }
 .wrap { max-width: 52rem; margin: 0 auto; padding: clamp(14px, 4vw, 28px); }
 .top { display: flex; align-items: center; gap: 12px; padding: 6px 0 22px; }
 .top img { width: 34px; height: 34px; }
-.top b { font: 800 1.1rem var(--font-ui); letter-spacing: -.01em; }
+.top b { font: 800 1.1rem var(--font-ui); }
 .top a { margin-left: auto; text-decoration: none; font-size: .9rem; }
 .top a:hover { text-decoration: underline; }
-h1 { margin: 0 0 14px; font: 800 clamp(1.5rem, 4vw, 1.9rem) var(--font-ui); letter-spacing: -.02em; }
+h1 { margin: 0 0 .4em; font-family: var(--font-ui); font-size: clamp(1.95rem, 5vw, 2.45rem); font-weight: 800; line-height: 1.15; letter-spacing: -.005em; }
+.page-head { padding-top: .75rem; margin-bottom: 1.5rem; } .page-head p { color: var(--muted); max-width: 44rem; margin: 0; font-size: clamp(1.05rem, 2.2vw, 1.2rem); line-height: 1.55; }
+@media (min-width: 48rem) { .page-head { padding-top: 1.5rem; margin-bottom: 2rem; } }
 .intro { margin: 14px 0 18px; color: var(--ink-2); font-size: .94rem; max-width: 42rem; }
 
 .tools { display: flex; gap: 10px; align-items: center; margin: 0 0 14px; }
@@ -75,7 +81,7 @@ summary .t { flex: 1; min-width: 0; }
 .rows { border-top: 1px solid var(--line); background: var(--paper-2); }
 .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center; padding: .65rem 1.1rem .65rem 2.6rem; }
 .row + .row { border-top: 1px solid var(--line); }
-.row .n { font-weight: 600; overflow-wrap: anywhere; }
+.row .n { font-family: var(--font-ui); font-weight: 700; overflow-wrap: anywhere; }
 .row .n small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; }
 .row.bad { background: var(--bad-weak); }
 .row .m { grid-column: 1 / -1; display: flex; gap: 4px 14px; align-items: center; color: var(--muted); font-size: .8rem; flex-wrap: wrap; }
@@ -98,6 +104,11 @@ footer { margin: 28px 0 8px; color: var(--muted); font-size: .85rem; line-height
     <img src="/icon.svg" alt="">
     <b>OpenPak status</b>
     <a href="https://openpak.org">openpak.org &rarr;</a>
+  </div>
+
+  <div class="page-head">
+    <h1>Service status</h1>
+    <p>Is OpenPak working? Every network and service, checked from outside.</p>
   </div>
 
   <div class="sv-banner {{if eq .State "ok"}}{{else if eq .State "some"}}warn{{else}}bad{{end}}" role="status">
