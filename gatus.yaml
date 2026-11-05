@@ -1281,6 +1281,17 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == pat(*returncd=*)"
 
+  - name: Plain-HTTP front (port 80)
+    group: Core
+    # http-hostfix (prds#144): the Wii's NAS login carries the Host header twice; before the
+    # shim Traefik answered 400. Send exactly that over raw TCP and expect a 200.
+    url: tcp://nas.openpak.org:80
+    body: "POST /ac HTTP/1.1\r\nHost: nas.openpak.org\r\nHost: nas.openpak.org\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 23\r\nConnection: close\r\n\r\naction=YWNjdGNyZWF0ZQ**"
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+      - "[BODY] == pat(HTTP/1.1 200*)"
+
   - name: Wii/DS linking
     group: Wii/DS
     # Link-first (prds#139): unlinked consoles are refused with a code and linked at openpak.org/link.

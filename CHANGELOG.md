@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.4
+
+- Core: "Plain-HTTP front (port 80)" check sends the Wii's duplicate-Host NAS login over raw TCP and expects a 200 (http-hostfix, prds#144). Page blurbs for it and for "Wii/DS linking".
+
 ## v0.7.3
 
 - Wii/DS: new "Wii/DS linking" check (wfc-api pairing counters through wfc-nas, prds#139 link-first).

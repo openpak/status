@@ -162,6 +162,8 @@ var more = []struct{ group, name, text string }{
 	{"Wii U/3DS", "SpotPass", "Data a console downloads in the background: news, game content and StreetPass."},
 	{"Wii U/3DS", "eShop", "The Wii U and 3DS shop."},
 	{"Wii U/3DS", "Splatfest results", "Splatoon Splatfest scores."},
+	{"Core", "Plain-HTTP front (port 80)", "Everything consoles fetch over plain HTTP passes through it. If it fails, no Wii can sign in to Wi-Fi Connection."},
+	{"Wii/DS", "Wii/DS linking", "Linking a Wii or DS to your account with the code it shows."},
 	{"Wii/DS", "DS login", "A Nintendo DS signing in to Wi-Fi Connection."},
 	{"Wii/DS", "Wii login", "A Wii signing in to Wi-Fi Connection."},
 	{"Wii/DS", "Connection test (Wii)", "The page a Wii loads to check that its Wi-Fi works."},
