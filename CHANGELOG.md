@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.6
+
+- "Wii/DS game-port front": the greeting pattern has no backslashes (Gatus read them as escapes and never matched).
+
 ## v0.7.5
 
 - Wii/DS: "Wii/DS game-port front" check expects the GPCM greeting through wfc-front (prds#149).

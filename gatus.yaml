@@ -1301,7 +1301,7 @@ endpoints:
     interval: 120s
     conditions:
       - "[CONNECTED] == true"
-      - '[BODY] == pat(\lc\1\*)'
+      - "[BODY] == pat(*lc*challenge*)"
 
   - name: Wii/DS linking
     group: Wii/DS
