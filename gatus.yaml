@@ -113,6 +113,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Game matchmaking
+    group: Core
+    # The neutral matchmaking core behind every console's rooms, lobbies and game search.
+    url: https://openpak.org/healthz/matchmaking
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   - name: Database connections
     group: Core
     # Postgres client connections: the website answers 503 from 240, which is 80% of max_connections=300.

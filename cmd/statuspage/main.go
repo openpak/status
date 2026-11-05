@@ -110,6 +110,7 @@ var more = []struct{ group, name, text string }{
 	{"Core", "Game leaderboards", "The shared score boards every console's games post to and read from."},
 	{"Core", "Game achievements", "The trophies and achievements every console earns, kept in one place across consoles."},
 	{"Core", "Game title storage", "The shared place where every console's games keep each player's own data, like progress counters and uploads."},
+	{"Core", "Game matchmaking", "The shared place where every console's games create, list and join their online rooms."},
 	{"Core", "Database connections", "How full the database server is. It stops accepting new connections at its limit."},
 	{"Core", "Network registry", "Where the console and emulator builds fetch their signed bundles from."},
 	{"Core", "Rewards", "Badges, themes and shop items earned across the network."},

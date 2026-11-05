@@ -7,6 +7,10 @@ of truth; this file is the readable summary.
 
 - Core check `Shop catalog` (`/healthz/shop-core`, openpak/prds#124).
 
+## v0.6.4
+
+- Core check `Game matchmaking` (`/healthz/matchmaking`) for the new matchmaking core.
+
 ## v0.6.3
 
 - Drift allowlist: the archived `wfc-content` package and the hardware-blocked `ps4-telemetry` and `ps5-*` packages, each with its reason.
