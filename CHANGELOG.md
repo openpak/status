@@ -7,7 +7,7 @@ of truth; this file is the readable summary.
 
 - Core check `Shop catalog` (`/healthz/shop-core`, openpak/prds#124).
 
-## v0.6.2
+## v0.6.3
 
 - Drift allowlist: the archived `wfc-content` package and the hardware-blocked `ps4-telemetry` and `ps5-*` packages, each with its reason.
 
