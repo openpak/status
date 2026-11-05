@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""openpak-dedup-check: do the caches still agree with the account core? (board card #131, phase 10)
+
+Run nightly by openpak-dedup-check.timer and by hand (`openpak-dedup-check`). Read-only: SELECT statements only,
+through `podman exec openpak-postgres psql`. No personal value is ever read into this process or printed: every
+comparison is an md5 of the lowercased, trimmed value computed inside Postgres, joined on the core account id.
+Output is counts only.
+
+Per store: compared (rows that map to a core account and were checked), equal, diverging, orphans (rows that name
+an account the core does not have). A row diverges when a cache holds a non-empty value that differs from the core's
+value, or holds a value the core has not got (a cache must never be written first). An empty cache value is fine.
+
+Fails (exit 1, so the oneshot unit fails and OnFailure= fires openpak-unit-failed@, which Pakka announces) when
+any store has diverging rows, an orphan count above the last run's, or a store grew an identity column
+(name, email, country, birthday, language, timezone, mii) that is not in its allowlist below.
+
+One line goes to stdout per run (journal -> openpak-logd -> ~/openpak-logs/openpak-dedup-check/<day>.log, 90 days).
+The detail goes to ~/openpak/deploy/dedup-report.txt; last orphan counts live in dedup-state.json next to it.
+
+Env: DEDUP_DEPLOY (default ~/openpak/deploy), DEDUP_PG (default openpak-postgres), DEDUP_NO_STATE=1 to leave the
+state file alone (manual dry runs).
+"""
+import json, os, re, subprocess, sys, time
+from pathlib import Path
+
+DEPLOY = Path(os.environ.get("DEDUP_DEPLOY", Path.home() / "openpak/deploy"))
+PG = os.environ.get("DEDUP_PG", "openpak-postgres")
+SEP = "\x1f"
+
+
+def sql(db, query):
+    r = subprocess.run(["podman", "exec", PG, "psql", "-U", "postgres", "-d", db, "-X", "-A", "-t", "-F", SEP,
+                        "-v", "ON_ERROR_STOP=1", "-c", query], capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(f"{db}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'psql failed'}")
+    return [ln.split(SEP) for ln in r.stdout.splitlines() if ln != ""]
+
+
+def H(expr):
+    """md5 of the lowercased trimmed value, or '' when unset. The only form in which a value leaves Postgres."""
+    return f"case when nullif(trim(({expr})::text),'') is null then '' else md5(lower(trim(({expr})::text))) end"
+
+
+# ---- core ------------------------------------------------------------------------------------------------------
+CORE_FIELDS = ["display_name", "handle", "email", "country", "language", "timezone", "birthday", "mii_name"]
+
+
+def load_core():
+    rows = sql("account", f"""
+        select a.id,
+          {H('a.display_name')}, {H('a.handle')}, {H('a.email')}, {H('a.country')}, {H('a.language')},
+          {H('a.timezone')}, {H("to_char(a.birthday,'YYYY-MM-DD')")}, {H('m.name')},
+          (m.account_id is not null)::int
+        from accounts a left join account_miis m on m.account_id = a.id""")
+    core = {}
+    for r in rows:
+        core[r[0].lower()] = dict(zip(CORE_FIELDS, r[1:9]), has_mii=r[9] == "1")
+    links = {}  # (namespace, subject) -> account id
+    for ns, subj, acc in sql("account", "select namespace, subject_id, account_id from adapter_links where state='active'"):
+        links[(ns, subj)] = acc.lower()
+    return core, links
+
+
+class Store:
+    def __init__(self, name):
+        self.name = name
+        self.compared = self.equal = self.diverging = self.orphans = 0
+        self.fields = {}      # field -> diverging rows
+        self.note = ""
+
+    def row(self, core_id, core, local, mii_local=False, bday_local=False):
+        """core_id: account id (or None when the row is a pure orphan); local: {field: hash}."""
+        if core_id is None or core_id not in core:
+            self.orphans += 1
+            return
+        c = core[core_id]
+        bad = []
+        for f, h in local.items():
+            if h and h != c[f]:
+                bad.append(f + ("(core empty)" if not c[f] else ""))
+        if mii_local and not c["has_mii"]:
+            bad.append("mii")
+        if bday_local and not c["birthday"]:
+            bad.append("birthday(core empty)")
+        self.compared += 1
+        if bad:
+            self.diverging += 1
+            for f in bad:
+                self.fields[f] = self.fields.get(f, 0) + 1
+        else:
+            self.equal += 1
+
+    def line(self):
+        d = ",".join(f"{k}:{v}" for k, v in sorted(self.fields.items()))
+        return (f"{self.name:34s} compared={self.compared:<5d} equal={self.equal:<5d} diverging={self.diverging:<5d} "
+                f"orphans={self.orphans:<5d}" + (f" fields[{d}]" if d else "") + (f"  {self.note}" if self.note else ""))
+
+
+STORES = []
+
+
+def store(name):
+    s = Store(name)
+    STORES.append(s)
+    return s
+
+
+# ---- identity columns a cache is allowed to have -----------------------------------------------------------------
+# db -> (table regex, allowed column regexes with the reason). Anything matching IDENT outside this list fails the run,
+# which is the runtime twin of the CI lint (.dedup-allow in each adapter repo).
+IDENT = re.compile(r"(^|_)(name|nickname|displayname|username|email|country|birthday|birth|language|timezone|mii|handle|gamertag|"
+                   r"firstname|lastname|pnid)(_|$)", re.I)
+SCHEMA_GUARDS = {
+    "website": {"tables": ["web_sessions"], "allow": []},
+    "photon": {"tables": ["Accounts", "Profiles"], "allow": []},
+    "stumble": {"tables": ["stumble_accounts"], "allow": []},
+    "spelunky2": {"tables": ["spelunky2_runs"], "allow": []},
+    # wwfc firstname/lastname are game data (owner decision 2026-11-05); email/nick come from core
+    "wwfc": {"tables": ["users"], "allow": ["firstname", "lastname", "last_ingamesn"]},
+}
+
+
+def schema_guard(db, spec):
+    s = store(f"{db} (schema)")
+    tabs = ",".join("'" + t + "'" for t in spec["tables"])
+    cols = sql(db, f"select table_name, column_name from information_schema.columns where table_schema='public' "
+                   f"and table_name in ({tabs})")
+    rows = sum(int(r[0]) for r in [sql(db, f'select count(*) from public."{t}"')[0] for t in spec["tables"]])
+    bad = [f"{t}.{c}" for t, c in cols if IDENT.search(c) and c not in spec["allow"]]
+    s.compared = rows
+    s.equal = rows if not bad else 0
+    s.diverging = rows if bad else 0
+    s.fields = {b: 1 for b in bad}
+    s.note = "no core link column; checked that no identity column exists"
+    return s
+
+
+def main():
+    t0 = time.time()
+    errors = []
+    core, links = load_core()
+
+    def run(label, fn):
+        try:
+            fn()
+        except Exception as e:  # a store that cannot be read is a failure, not a pass
+            errors.append(f"{label}: {e}")
+
+    # nn-account pnids (account_id is the core id)
+    def pnids():
+        s = store("nn_account.pnids")
+        for acc, uname, mname, country, lang, tz, mii in sql("nn_account", f"""
+            select account_id, {H('username')}, {H('mii_name')}, {H('country')}, {H('language')}, {H('timezone_name')},
+                   (coalesce(mii_data,'')<>'')::int from pnids where not coalesce(deleted,false)"""):
+            s.row((acc or "").lower() or None, core,
+                  {"handle": uname, "country": country, "language": lang, "timezone": tz}, mii == "1")
+    run("nn_account.pnids", pnids)
+
+    # nn-friends caches, keyed by PID -> core account through the wiiu / 3ds link
+    def friends():
+        for tbl, ns, fields, miiexpr in [
+            ("wiiu.principal_basic_info", "wiiu", f"{H('username')}", None),
+            ("wiiu.mii", "wiiu", "''", "(coalesce(length(data),0)>0)::int"),
+            ("wiiu.network_account_info", "wiiu", "''", None),
+            ("3ds.user_data", "3ds", "''", "(coalesce(length(mii_data),0)>0)::int"),
+        ]:
+            s = store("nn_friends." + tbl)
+            extra = {"wiiu.network_account_info": "(coalesce(birthday,0)<>0)::int"}.get(tbl, "0")
+            for pid, h, m, b in sql("nn_friends", f'select pid, {fields}, {miiexpr or "0"}, {extra} from "{tbl.split(".")[0]}"."{tbl.split(".")[1]}"'):
+                acc = links.get((ns, pid))
+                loc = {"handle": h} if tbl.endswith("principal_basic_info") else {}
+                s.row(acc, core, loc, m == "1", b == "1")
+    run("nn_friends", friends)
+
+    # Miiverse users: pid -> account through the wiiu link; web_identities carries the core id as text
+    def miiverse():
+        s = store("miiverse.users")
+        web = {p: a for p, a in sql("miiverse", "select pid, account_id from web_identities")}
+        for pid, dn, pnid in sql("miiverse", f"select pid, {H('display_name')}, {H('pnid')} from users"):
+            acc = (web.get(pid) or links.get(("wiiu", pid)) or "").lower() or None
+            s.row(acc, core, {"display_name": dn, "handle": pnid})
+    run("miiverse", miiverse)
+
+    # Xbox
+    def xbox():
+        s = store("xbox.xb_account.users")
+        x2a = {}
+        for acc, xuid, gt in sql("xbox", f"select core_account_id, xuid, {H('gamertag')} from xb_account.users"):
+            x2a[xuid] = (acc or "").lower() or None
+            s.row(x2a[xuid], core, {"handle": gt})
+        s = store("xbox.xb_account.gamertag_aliases")
+        for xuid, al in sql("xbox", f"select xuid, {H('alias_lower')} from xb_account.gamertag_aliases"):
+            s.row(x2a.get(xuid), core, {"handle": al})
+    run("xbox", xbox)
+
+    # website sessions: ids only
+    def website():
+        s = store("website.web_sessions")
+        for (acc,) in sql("website", "select account_id from web_sessions"):
+            s.row((acc or "").lower() or None, core, {})
+    run("website", website)
+
+    # nx-baas documents
+    def nxbaas():
+        by_baas = {k: (v or "").lower() for k, v in sql(
+            "nxbaas", "select e.key, e.value #>> '{}' from nxbaas_docs d, jsonb_each(d.doc->'by_baas') e where d.key='accounts.json'")}
+        s = store("nxbaas.baas.json users")
+        for uid, nick, ctry, bd in sql("nxbaas", f"""
+            select e.key, {H("e.value->>'nickname'")}, {H("e.value->>'country'")}, {H("left(e.value->>'birthday',10)")}
+            from nxbaas_docs d, jsonb_each(d.doc->'users') e where d.key='baas.json'"""):
+            s.row(by_baas.get(uid), core, {"display_name": nick, "country": ctry, "birthday": bd})
+        s = store("nxbaas.accounts.json by_account")
+        for acc, nick in sql("nxbaas", f"""
+            select e.key, {H("e.value->>'nickname'")} from nxbaas_docs d, jsonb_each(d.doc->'by_account') e
+            where d.key='accounts.json'"""):
+            s.row(acc.lower(), core, {"display_name": nick})
+        s = store("spelunky2.spelunky2_runs")
+        for (uid,) in sql("spelunky2", "select distinct baas_user_id from spelunky2_runs"):
+            s.row(by_baas.get(uid), core, {})
+    run("nxbaas", nxbaas)
+
+    # vendor servers with no core link column: prove no identity column came back
+    for db, spec in SCHEMA_GUARDS.items():
+        run(db, lambda db=db, spec=spec: schema_guard(db, spec))
+
+    # rewards: accounts and playtime against core play_sessions
+    def rewards():
+        s = store("rewards.accounts")
+        for (acc,) in sql("rewards", "select account_id from accounts"):
+            s.row(acc.lower(), core, {})
+        sess = {}
+        for acc, ns, tid, secs in sql("account", "select account_id, namespace, lower(coalesce(title_id,'')), "
+                                                  "coalesce(sum(online_seconds),0) from play_sessions group by 1,2,3"):
+            sess[(acc.lower(), ns, tid)] = int(secs)
+        s = store("rewards.play_cursor")
+        s.note = "counted_seconds vs core play_sessions sum; a cursor may trail the core, never lead"
+        for acc, ns, tid, secs in sql("rewards", "select account_id, namespace, lower(title_id), counted_seconds from play_cursor"):
+            a = acc.lower()
+            if a not in core:
+                s.orphans += 1
+                continue
+            s.compared += 1
+            if int(secs) > sess.get((a, ns, tid), 0):  # a cache can lag, never lead
+                s.diverging += 1
+                s.fields["seconds"] = s.fields.get("seconds", 0) + 1
+            else:
+                s.equal += 1
+    run("rewards", rewards)
+
+    # ---- report ----------------------------------------------------------------------------------------------
+    state_f = DEPLOY / "dedup-state.json"
+    try:
+        prev = json.loads(state_f.read_text())
+    except Exception:
+        prev = {}
+    now = {s.name: s.orphans for s in STORES}
+    fail = list(errors)
+    for s in STORES:
+        if s.diverging:
+            fail.append(f"{s.name}: {s.diverging} diverging")
+        if s.name in prev and s.orphans > prev[s.name]:
+            fail.append(f"{s.name}: orphans rose {prev[s.name]} -> {s.orphans}")
+    stamp = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
+    rep = [f"openpak dedup report, {stamp}; core accounts: {len(core)}; counts only, md5 compares"]
+    rep += [s.line() for s in STORES]
+    rep += ["FAILED: " + f for f in fail] if fail else ["all caches agree with the core"]
+    text = "\n".join(rep) + "\n"
+    try:
+        DEPLOY.mkdir(parents=True, exist_ok=True)
+        (DEPLOY / "dedup-report.txt").write_text(text)
+        if not os.environ.get("DEDUP_NO_STATE") and not errors:
+            state_f.write_text(json.dumps(now))
+    except OSError as e:
+        print(f"cannot write report: {e}", file=sys.stderr)
+    if "--verbose" in sys.argv or os.environ.get("DEDUP_VERBOSE"):
+        print(text, end="")
+    tot = lambda a: sum(getattr(s, a) for s in STORES)
+    print(f"dedup-check {'FAIL' if fail else 'ok'} stores={len(STORES)} compared={tot('compared')} equal={tot('equal')} "
+          f"diverging={tot('diverging')} orphans={tot('orphans')} errors={len(errors)} secs={time.time()-t0:.1f}")
+    for f in fail:
+        print("  " + f, file=sys.stderr)
+    return 1 if fail else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

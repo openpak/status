@@ -1,0 +1,10 @@
+[Unit]
+Description=OpenPak dedup check: do the caches still agree with the account core (counts only)
+OnFailure=openpak-unit-failed@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/openpak-dedup-check
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=10min

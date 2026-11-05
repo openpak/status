@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.0
+
+- `dedup-check/`: `openpak-dedup-check` and its daily timer (07:45 UTC) compare the account core with every cache by md5 and report counts; fails (Pakka alert) on divergence, a rising orphan count or a new identity column (openpak/prds#131 phase 10). The CI twin is `scripts/dedup-lint.py` in openpak/.github.
+
 ## v0.6.2
 
 - Core check `Shop catalog` (`/healthz/shop-core`, openpak/prds#124).
