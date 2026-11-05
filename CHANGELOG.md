@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.5
+
+- Wii/DS: "Wii/DS game-port front" check expects the GPCM greeting through wfc-front (prds#149).
+
 ## v0.7.4
 
 - Core: "Plain-HTTP front (port 80)" check sends the Wii's duplicate-Host NAS login over raw TCP and expects a 200 (http-hostfix, prds#144). Page blurbs for it and for "Wii/DS linking".

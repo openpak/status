@@ -1292,6 +1292,17 @@ endpoints:
       - "[CONNECTED] == true"
       - "[BODY] == pat(HTTP/1.1 200*)"
 
+  - name: Wii/DS game-port front
+    group: Wii/DS
+    # wfc-front (prds#149): GPCM, server browser, QR2 and NATNEG reach the services through it with
+    # the player's real address (PROXY v2). GPCM speaks first: its greeting means the whole path is up.
+    url: tcp://145.241.199.19:29900
+    body: "\n"
+    interval: 120s
+    conditions:
+      - "[CONNECTED] == true"
+      - '[BODY] == pat(\lc\1\*)'
+
   - name: Wii/DS linking
     group: Wii/DS
     # Link-first (prds#139): unlinked consoles are refused with a code and linked at openpak.org/link.
