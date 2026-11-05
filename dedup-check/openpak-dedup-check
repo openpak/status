@@ -64,7 +64,7 @@ def load_core():
 class Store:
     def __init__(self, name):
         self.name = name
-        self.compared = self.equal = self.diverging = self.orphans = 0
+        self.compared = self.equal = self.diverging = self.orphans = self.grace = self.retired = 0
         self.fields = {}      # field -> diverging rows
         self.note = ""
 
@@ -93,8 +93,13 @@ class Store:
     def line(self):
         d = ",".join(f"{k}:{v}" for k, v in sorted(self.fields.items()))
         return (f"{self.name:34s} compared={self.compared:<5d} equal={self.equal:<5d} diverging={self.diverging:<5d} "
-                f"orphans={self.orphans:<5d}" + (f" fields[{d}]" if d else "") + (f"  {self.note}" if self.note else ""))
+                f"orphans={self.orphans:<5d}" + (f" grace={self.grace}" if self.grace else "") + (f" retired-skipped={self.retired}" if self.retired else "") + (f" fields[{d}]" if d else "") + (f"  {self.note}" if self.note else ""))
 
+
+# nx-baas keeps an unlinked user written in the last 7 days (orphans.RecentWindow): a console may still sign in
+# with that device account and link it. The same window is the check's grace: it is counted as `grace`, not as an
+# orphan, and becomes an orphan (and is deleted by the orphan cleanup) once it is older.
+GRACE_DAYS = 7
 
 STORES = []
 
@@ -183,13 +188,25 @@ def main():
 
     # Xbox
     def xbox():
+        # status 'unlinked' = a retired identity (replaced automatic identity: alias freed, resolver denies it).
+        # It is history for the XUID, not a cache of the handle, so it is not compared; an alias still attached
+        # to one is a leak and counts as diverging.
         s = store("xbox.xb_account.users")
-        x2a = {}
-        for acc, xuid, gt in sql("xbox", f"select core_account_id, xuid, {H('gamertag')} from xb_account.users"):
+        x2a, retired = {}, set()
+        for acc, xuid, gt, st in sql("xbox", f"select core_account_id, xuid, {H('gamertag')}, status from xb_account.users"):
+            if st in ("unlinked", "deleted"):
+                retired.add(xuid)
+                s.retired += 1
+                continue
             x2a[xuid] = (acc or "").lower() or None
             s.row(x2a[xuid], core, {"handle": gt})
         s = store("xbox.xb_account.gamertag_aliases")
         for xuid, al in sql("xbox", f"select xuid, {H('alias_lower')} from xb_account.gamertag_aliases"):
+            if xuid in retired:
+                s.compared += 1
+                s.diverging += 1
+                s.fields["alias-on-retired"] = s.fields.get("alias-on-retired", 0) + 1
+                continue
             s.row(x2a.get(xuid), core, {"handle": al})
     run("xbox", xbox)
 
@@ -205,10 +222,16 @@ def main():
         by_baas = {k: (v or "").lower() for k, v in sql(
             "nxbaas", "select e.key, e.value #>> '{}' from nxbaas_docs d, jsonb_each(d.doc->'by_baas') e where d.key='accounts.json'")}
         s = store("nxbaas.baas.json users")
-        for uid, nick, ctry, bd in sql("nxbaas", f"""
-            select e.key, {H("e.value->>'nickname'")}, {H("e.value->>'country'")}, {H("left(e.value->>'birthday',10)")}
+        s.note = f"recent-unlinked grace: a BAAS user with no core account written within {GRACE_DAYS} days is not an orphan"
+        for uid, nick, ctry, bd, age in sql("nxbaas", f"""
+            select e.key, {H("e.value->>'nickname'")}, {H("e.value->>'country'")}, {H("left(e.value->>'birthday',10)")},
+                   extract(epoch from now()) - coalesce((e.value->>'updatedAt')::bigint, 0)
             from nxbaas_docs d, jsonb_each(d.doc->'users') e where d.key='baas.json'"""):
-            s.row(by_baas.get(uid), core, {"display_name": nick, "country": ctry, "birthday": bd})
+            acc = by_baas.get(uid)
+            if (acc is None or acc not in core) and float(age) < GRACE_DAYS * 86400:
+                s.grace += 1  # a console may still sign in with this device account; nx-baas keeps it for the same window
+                continue
+            s.row(acc, core, {"display_name": nick, "country": ctry, "birthday": bd})
         s = store("nxbaas.accounts.json by_account")
         for acc, nick in sql("nxbaas", f"""
             select e.key, {H("e.value->>'nickname'")} from nxbaas_docs d, jsonb_each(d.doc->'by_account') e
@@ -228,19 +251,30 @@ def main():
         s = store("rewards.accounts")
         for (acc,) in sql("rewards", "select account_id from accounts"):
             s.row(acc.lower(), core, {})
+        # Rewards counts what the core's GetPlayHistory returns: per title the wall-clock span of every
+        # finished session (ended_at - started_at) plus the one still running (adapter_sessions), whether or not
+        # it reached a game server. online_seconds is the narrower "reached a server" figure and is NOT what rewards
+        # reads (proved 2026-11-05: total_seconds equals this span sum on all 215 cursors, counted <= it on all).
         sess = {}
-        for acc, ns, tid, secs in sql("account", "select account_id, namespace, lower(coalesce(title_id,'')), "
-                                                  "coalesce(sum(online_seconds),0) from play_sessions group by 1,2,3"):
+        for acc, ns, tid, secs in sql("account", """
+            with d as (
+              select account_id, namespace, lower(title_id) t, extract(epoch from ended_at - started_at) s
+              from play_sessions where title_id <> ''
+              union all
+              select account_id, namespace, lower(title_id), extract(epoch from updated_at - created_at)
+              from adapter_sessions where title_id <> '' and expires_at > now())
+            select account_id, namespace, t, greatest(0, sum(s))::bigint from d group by 1,2,3"""):
             sess[(acc.lower(), ns, tid)] = int(secs)
         s = store("rewards.play_cursor")
-        s.note = "counted_seconds vs core play_sessions sum; a cursor may trail the core, never lead"
-        for acc, ns, tid, secs in sql("rewards", "select account_id, namespace, lower(title_id), counted_seconds from play_cursor"):
+        s.note = "total_seconds and counted_seconds vs core GetPlayHistory span sum; a cursor may trail the core, never lead"
+        for acc, ns, tid, total, secs in sql("rewards", "select account_id, namespace, lower(title_id), total_seconds, counted_seconds from play_cursor"):
             a = acc.lower()
             if a not in core:
                 s.orphans += 1
                 continue
             s.compared += 1
-            if int(secs) > sess.get((a, ns, tid), 0):  # a cache can lag, never lead
+            core_secs = sess.get((a, ns, tid), 0)
+            if int(secs) > core_secs or int(total) > core_secs:  # a cache can lag, never lead
                 s.diverging += 1
                 s.fields["seconds"] = s.fields.get("seconds", 0) + 1
             else:

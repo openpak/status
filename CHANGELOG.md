@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.1
+
+- `dedup-check` (openpak/prds#131 phase 10b): three comparisons that were provably wrong are corrected, nothing loosened. (1) rewards `play_cursor` is compared with the core's GetPlayHistory figure (wall-clock span of every session plus the running one), which is what rewards reads; `online_seconds` is a narrower figure rewards never uses. Evidence: on all 215 cursors `total_seconds` equals the span sum and `counted_seconds` never exceeds it, while 18 exceeded `online_seconds`. Both `total_seconds` and `counted_seconds` must stay at or below the core figure. (2) xbox users with status `unlinked`/`deleted` are retired identities (alias freed, resolver denies them), not caches: skipped and counted as `retired-skipped`; an alias still attached to a retired xuid counts as diverging. (3) nx-baas: an unlinked BAAS user written within 7 days (the window nx-baas's own orphan cleanup keeps) is `grace`, not an orphan; older ones are orphans again.
+
 ## v0.7.0
 
 - `dedup-check/`: `openpak-dedup-check` and its daily timer (07:45 UTC) compare the account core with every cache by md5 and report counts; fails (Pakka alert) on divergence, a rising orphan count or a new identity column (openpak/prds#131 phase 10). The CI twin is `scripts/dedup-lint.py` in openpak/.github.

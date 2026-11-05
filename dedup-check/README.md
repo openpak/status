@@ -16,6 +16,8 @@ users and `accounts.json by_account`; spelunky2 runs; rewards `accounts` and `pl
 wwfc and the website have no core link column, so a schema guard proves no identity column (name, email, country,
 birthday, language, timezone, Mii) came back there.
 
+Documented exceptions, each with evidence in `CHANGELOG.md` v0.7.1: rewards compares with the core's wall-clock play history (what rewards reads), retired Xbox users (`unlinked`/`deleted`) are skipped (`retired-skipped`), and an unlinked nx-baas user younger than 7 days is `grace`, not an orphan.
+
 Per store: `compared`, `equal`, `diverging`, `orphans` (rows naming an account the core does not have). A row diverges
 when a cache holds a non-empty value that differs from the core, or a value the core lacks (`(core empty)`); an empty
 cache value is fine. The run fails (exit 1, `OnFailure=` makes Pakka announce it) on any divergence, any orphan count
