@@ -50,11 +50,11 @@ def load_core():
         select a.id,
           {H('a.display_name')}, {H('a.handle')}, {H('a.email')}, {H('a.country')}, {H('a.language')},
           {H('a.timezone')}, {H("to_char(a.birthday,'YYYY-MM-DD')")}, {H('m.name')},
-          (m.account_id is not null)::int
+          (m.account_id is not null)::int, coalesce(md5(m.ver3),'')
         from accounts a left join account_miis m on m.account_id = a.id""")
     core = {}
     for r in rows:
-        core[r[0].lower()] = dict(zip(CORE_FIELDS, r[1:9]), has_mii=r[9] == "1")
+        core[r[0].lower()] = dict(zip(CORE_FIELDS, r[1:9]), has_mii=r[9] == "1", mii_ver3=r[10])
     links = {}  # (namespace, subject) -> account id
     for ns, subj, acc in sql("account", "select namespace, subject_id, account_id from adapter_links where state='active'"):
         links[(ns, subj)] = acc.lower()
@@ -64,12 +64,14 @@ def load_core():
 class Store:
     def __init__(self, name):
         self.name = name
-        self.compared = self.equal = self.diverging = self.orphans = self.grace = self.retired = 0
+        self.compared = self.equal = self.diverging = self.orphans = self.grace = self.retired = self.service = 0
         self.fields = {}      # field -> diverging rows
         self.note = ""
 
     def row(self, core_id, core, local, mii_local=False, bday_local=False):
-        """core_id: account id (or None when the row is a pure orphan); local: {field: hash}."""
+        """core_id: account id (or None when the row is a pure orphan); local: {field: hash}.
+        mii_local: False (cache holds no Mii), True (it holds one; only presence is checked) or the md5 of the cached
+        Ver3 bytes, which must equal the md5 of the core's Ver3."""
         if core_id is None or core_id not in core:
             self.orphans += 1
             return
@@ -79,6 +81,8 @@ class Store:
             if h and h != c[f]:
                 bad.append(f + ("(core empty)" if not c[f] else ""))
         if mii_local and not c["has_mii"]:
+            bad.append("mii(core empty)")
+        elif mii_local not in (True, False) and mii_local != c["mii_ver3"]:
             bad.append("mii")
         if bday_local and not c["birthday"]:
             bad.append("birthday(core empty)")
@@ -93,13 +97,21 @@ class Store:
     def line(self):
         d = ",".join(f"{k}:{v}" for k, v in sorted(self.fields.items()))
         return (f"{self.name:34s} compared={self.compared:<5d} equal={self.equal:<5d} diverging={self.diverging:<5d} "
-                f"orphans={self.orphans:<5d}" + (f" grace={self.grace}" if self.grace else "") + (f" retired-skipped={self.retired}" if self.retired else "") + (f" fields[{d}]" if d else "") + (f"  {self.note}" if self.note else ""))
+                f"orphans={self.orphans:<5d}" + (f" grace={self.grace}" if self.grace else "") + (f" retired-skipped={self.retired}" if self.retired else "") + (f" service-skipped={self.service}" if self.service else "") + (f" fields[{d}]" if d else "") + (f"  {self.note}" if self.note else ""))
 
 
 # nx-baas keeps an unlinked user written in the last 7 days (orphans.RecentWindow): a console may still sign in
 # with that device account and link it. The same window is the check's grace: it is counted as `grace`, not as an
 # orphan, and becomes an orphan (and is deleted by the orphan cleanup) once it is older.
 GRACE_DAYS = 7
+
+# nn-account serves a user with no Mii the registration placeholder ("Default"), a derived default and nobody's Mii.
+# nn-friends caches what nn-account serves, so a cached placeholder is "no Mii", not a copy of one.
+DEFAULT_MII_B64 = ("AwAAQOlVognnx0GC2/uogAOzuI0n2QAAAEBEAGUAZgBhAHUAbAB0AAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGm9")
+
+# Miiverse's official account (Pakka): a service identity with no web_identities row and no console, by design
+# (nn-juxtaposition docs/official-account.md). It is recognised by this exact pid and never compared or counted as an orphan.
+MIIVERSE_OFFICIAL_PID = "2000000000"
 
 STORES = []
 
@@ -154,18 +166,35 @@ def main():
     # nn-account pnids (account_id is the core id)
     def pnids():
         s = store("nn_account.pnids")
+        # pnids holds no Mii (nn-account v0.19.0 dropped the column). Until that release runs, a leftover column
+        # still counts as a Mii in pnids unless it is the placeholder.
+        has_col = sql("nn_account", "select 1 from information_schema.columns where table_name='pnids' and column_name='mii_data'")
+        miiexpr = f"(coalesce(mii_data,'') not in ('', '{DEFAULT_MII_B64}'))::int" if has_col else "0"
         for acc, uname, mname, country, lang, tz, mii in sql("nn_account", f"""
             select account_id, {H('username')}, {H('mii_name')}, {H('country')}, {H('language')}, {H('timezone_name')},
-                   (coalesce(mii_data,'')<>'')::int from pnids where not coalesce(deleted,false)"""):
+                   {miiexpr} from pnids where not coalesce(deleted,false)"""):
             s.row((acc or "").lower() or None, core,
                   {"handle": uname, "country": country, "language": lang, "timezone": tz}, mii == "1")
+        # The one landing place for a Mii the core could not take: a queue row is a transient with an age limit.
+        q = store("nn_account.pending_miis")
+        q.note = "upload queue for a core outage; a row older than 1 hour is a fault"
+        for acc, age in sql("nn_account", "select coalesce(p.account_id::text,''), extract(epoch from now()-q.created_at)::int "
+                                          "from pending_miis q left join pnids p on p.pid=q.pid"):
+            if age > 3600:
+                q.compared += 1
+                q.diverging += 1
+                q.fields["stuck>1h"] = q.fields.get("stuck>1h", 0) + 1
+            else:
+                q.compared += 1
+                q.equal += 1
     run("nn_account.pnids", pnids)
 
     # nn-friends caches, keyed by PID -> core account through the wiiu / 3ds link
     def friends():
         for tbl, ns, fields, miiexpr in [
             ("wiiu.principal_basic_info", "wiiu", f"{H('username')}", None),
-            ("wiiu.mii", "wiiu", "''", "(coalesce(length(data),0)>0)::int"),
+            # md5 of the Ver3 bytes, '' when empty or the placeholder; compared with the md5 of the core's Ver3
+            ("wiiu.mii", "wiiu", "''", f"case when coalesce(length(data),0)=0 or data = decode('{DEFAULT_MII_B64}','base64') then '' else md5(data) end"),
             ("wiiu.network_account_info", "wiiu", "''", None),
             ("3ds.user_data", "3ds", "''", "(coalesce(length(mii_data),0)>0)::int"),
         ]:
@@ -174,7 +203,8 @@ def main():
             for pid, h, m, b in sql("nn_friends", f'select pid, {fields}, {miiexpr or "0"}, {extra} from "{tbl.split(".")[0]}"."{tbl.split(".")[1]}"'):
                 acc = links.get((ns, pid))
                 loc = {"handle": h} if tbl.endswith("principal_basic_info") else {}
-                s.row(acc, core, loc, m == "1", b == "1")
+                mii = (m or False) if tbl == "wiiu.mii" else m == "1"
+                s.row(acc, core, loc, mii, b == "1")
     run("nn_friends", friends)
 
     # Miiverse users: pid -> account through the wiiu link; web_identities carries the core id as text
@@ -183,6 +213,9 @@ def main():
         web = {p: a for p, a in sql("miiverse", "select pid, account_id from web_identities")}
         for pid, dn, pnid in sql("miiverse", f"select pid, {H('display_name')}, {H('pnid')} from users"):
             acc = (web.get(pid) or links.get(("wiiu", pid)) or "").lower() or None
+            if acc is None and pid == MIIVERSE_OFFICIAL_PID:
+                s.service += 1
+                continue
             s.row(acc, core, {"display_name": dn, "handle": pnid})
     run("miiverse", miiverse)
 

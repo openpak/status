@@ -3,6 +3,12 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.2
+
+- `dedup-check` (openpak/prds#131 phase 10b): the Mii comparison now compares bytes, not presence. nn-friends `wiiu.mii` is checked by md5 of the cached Ver3 against md5 of the core's Ver3, and the registration placeholder ("Default") counts as "no Mii". Evidence for the 8 flagged rows: all 8 cached bytes equal the placeholder nn-account serves for an account with no core Mii (the nn-friends refresh is correct, it caches what nn-account serves); the one real cached Mii matched the core's md5. A cached real Mii the core lacks is still `mii(core empty)`, a mismatch still `mii`.
+- nn_account: `pnids` holds no Mii after nn-account v0.19.0 (column dropped); the check still flags a leftover column that holds a non-placeholder Mii. New store `nn_account.pending_miis` (the upload queue for a core outage): a row older than one hour is diverging (`stuck>1h`), younger rows are a transient.
+- miiverse: the official Pakka account (pid 2000000000, no web_identities row by design, docs/official-account.md in nn-juxtaposition) is recognised by that exact pid and reported as `service-skipped`, not as an orphan.
+
 ## v0.7.1
 
 - `dedup-check` (openpak/prds#131 phase 10b): three comparisons that were provably wrong are corrected, nothing loosened. (1) rewards `play_cursor` is compared with the core's GetPlayHistory figure (wall-clock span of every session plus the running one), which is what rewards reads; `online_seconds` is a narrower figure rewards never uses. Evidence: on all 215 cursors `total_seconds` equals the span sum and `counted_seconds` never exceeds it, while 18 exceeded `online_seconds`. Both `total_seconds` and `counted_seconds` must stay at or below the core figure. (2) xbox users with status `unlinked`/`deleted` are retired identities (alias freed, resolver denies them), not caches: skipped and counted as `retired-skipped`; an alias still attached to a retired xuid counts as diverging. (3) nx-baas: an unlinked BAAS user written within 7 days (the window nx-baas's own orphan cleanup keeps) is `grace`, not an orphan; older ones are orphans again.

@@ -18,6 +18,8 @@ birthday, language, timezone, Mii) came back there.
 
 Documented exceptions, each with evidence in `CHANGELOG.md` v0.7.1: rewards compares with the core's wall-clock play history (what rewards reads), retired Xbox users (`unlinked`/`deleted`) are skipped (`retired-skipped`), and an unlinked nx-baas user younger than 7 days is `grace`, not an orphan.
 
+Mii caches are compared by md5 of the Ver3 bytes against the core's Ver3 (the "Default" placeholder nn-account serves counts as no Mii); `pnids` holds none, and `nn_account.pending_miis` (the core-outage upload queue) fails on a row older than an hour. Miiverse's official Pakka account is `service-skipped`.
+
 Per store: `compared`, `equal`, `diverging`, `orphans` (rows naming an account the core does not have). A row diverges
 when a cache holds a non-empty value that differs from the core, or a value the core lacks (`(core empty)`); an empty
 cache value is fine. The run fails (exit 1, `OnFailure=` makes Pakka announce it) on any divergence, any orphan count
