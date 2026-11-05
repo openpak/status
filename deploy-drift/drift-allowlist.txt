@@ -1,2 +1,9 @@
 # Container packages in the openpak org that are deliberately not deployed as a quadlet on either box.
 # One package name per line, then `# reason`. Read by openpak-drift-check (~/openpak/deploy/drift-allowlist.txt).
+wfc-content # archived repo, superseded by wfc-sake and wfc-race
+ps4-telemetry # PS4 waits on a console (jailbreak ceiling 13.52); not deployed until proven on hardware (board prds#26 family)
+ps5-auth # PS5 hardware only, board card openpak/prds#26 Blocked on a console; deploy when one exists
+ps5-friends # same as ps5-auth
+ps5-messaging # same as ps5-auth
+ps5-profile # same as ps5-auth
+ps5-trophy # same as ps5-auth

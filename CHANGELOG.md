@@ -7,6 +7,10 @@ of truth; this file is the readable summary.
 
 - Core check `Shop catalog` (`/healthz/shop-core`, openpak/prds#124).
 
+## v0.6.2
+
+- Drift allowlist: the archived `wfc-content` package and the hardware-blocked `ps4-telemetry` and `ps5-*` packages, each with its reason.
+
 ## v0.6.1
 
 - Switch vendor checks for Hello Kitty Island Adventure (minsc.sunblink.io) and Plants vs. Zombies (accounts.ea.com, plus the generated 42230/tcp probe); both names added to the status box's host overrides.
