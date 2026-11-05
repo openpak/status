@@ -1281,6 +1281,16 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == pat(*returncd=*)"
 
+  - name: Wii/DS linking
+    group: Wii/DS
+    # Link-first (prds#139): unlinked consoles are refused with a code and linked at openpak.org/link.
+    # wfc-api's pairing counters through wfc-nas's /api/ proxy: the pairing tables answer.
+    url: http://available.gs.openpak.org/api/pair/stats
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*linked_consoles*)"
+
   - name: Connection test (Wii)
     group: Wii/DS
     url: http://conntest.openpak.org/

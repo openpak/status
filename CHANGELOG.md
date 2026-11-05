@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.3
+
+- Wii/DS: new "Wii/DS linking" check (wfc-api pairing counters through wfc-nas, prds#139 link-first).
+
 ## v0.7.2
 
 - `dedup-check` (openpak/prds#131 phase 10b): the Mii comparison now compares bytes, not presence. nn-friends `wiiu.mii` is checked by md5 of the cached Ver3 against md5 of the core's Ver3, and the registration placeholder ("Default") counts as "no Mii". Evidence for the 8 flagged rows: all 8 cached bytes equal the placeholder nn-account serves for an account with no core Mii (the nn-friends refresh is correct, it caches what nn-account serves); the one real cached Mii matched the core's md5. A cached real Mii the core lacks is still `mii(core empty)`, a mismatch still `mii`.
