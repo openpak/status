@@ -215,20 +215,27 @@ var tmpl = template.Must(template.New("page").Funcs(template.FuncMap{
 	"icons":  func() template.HTML { return template.HTML(shared.Icons) },
 }).Parse(pageHTML))
 
-// cache keeps a refresh storm off Gatus: the checks run on their own schedule,
-// so asking it more often than that tells nobody anything new.
+// cache holds the last good view. A background loop refreshes it, so a request never waits on
+// Gatus (its full status export is a few MB read from sqlite and takes seconds on a small box)
+// and a slow refresh only makes the page a little older, never slower.
 type cache struct {
-	mu   sync.Mutex
+	mu   sync.RWMutex
 	at   time.Time
 	view *pageView
 }
+
+const (
+	refreshEvery = 20 * time.Second
+	maxStale     = 5 * time.Minute // older than this the checker is considered unreachable
+)
 
 func main() {
 	gatus := getenv("GATUS_URL", "http://127.0.0.1:8450")
 	regionsURL = getenv("OPENPAK_REGIONS_URL", "https://openpak.org/api/v1/regions")
 	addr := getenv("STATUS_ADDR", "127.0.0.1:8451")
 	c := &cache{}
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
+	go c.run(client, gatus)
 
 	mux := http.NewServeMux()
 	// The same rounded UI face openpak.org uses, self-hosted so this page needs nothing else.
@@ -288,27 +295,54 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, mux))
 }
 
+// get returns the last good view at once. It waits only when there is none yet (start-up).
 func (c *cache) get(client *http.Client, gatus string) (*pageView, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.view != nil && time.Since(c.at) < 15*time.Second {
-		return c.view, nil
+	c.mu.RLock()
+	v, at := c.view, c.at
+	c.mu.RUnlock()
+	if v == nil {
+		if err := c.refresh(client, gatus); err != nil {
+			return nil, err
+		}
+		c.mu.RLock()
+		v, at = c.view, c.at
+		c.mu.RUnlock()
 	}
+	if time.Since(at) > maxStale {
+		return nil, fmt.Errorf("gatus: last good view is %s old", time.Since(at).Round(time.Second))
+	}
+	return v, nil
+}
+
+// refresh reads Gatus and the region list and swaps the view in; on failure the old view stays.
+func (c *cache) refresh(client *http.Client, gatus string) error {
 	resp, err := client.Get(gatus + "/api/v1/endpoints/statuses")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gatus: %s", resp.Status)
+		return fmt.Errorf("gatus: %s", resp.Status)
 	}
 	var eps []gatusEndpoint
 	if err := json.NewDecoder(resp.Body).Decode(&eps); err != nil {
-		return nil, err
+		return err
 	}
-	c.view, c.at = build(eps), time.Now()
-	addRegions(c.view, fetchRegions(client))
-	return c.view, nil
+	view := build(eps)
+	addRegions(view, fetchRegions(client))
+	c.mu.Lock()
+	c.view, c.at = view, time.Now()
+	c.mu.Unlock()
+	return nil
+}
+
+// run keeps the view fresh until the process ends.
+func (c *cache) run(client *http.Client, gatus string) {
+	for range time.Tick(refreshEvery) {
+		if err := c.refresh(client, gatus); err != nil {
+			log.Printf("status: refresh: %v (serving the last good view)", err)
+		}
+	}
 }
 
 var regionsURL string
