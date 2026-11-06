@@ -1230,16 +1230,22 @@ endpoints:
 
   - name: eShop
     group: Wii U/3DS
-    # nn-soap answers a junk SOAP body with its own error page. A stopped container would be a 502 from Traefik.
+    # A real ECS GetAccountStatus (a probe, not a console): nn-soap must answer 200 with the account
+    # status and echo the region and country the request names. A stopped container would be a 502 from
+    # Traefik; a request that is not SOAP gets 400.
     url: https://ecs.wup.shop.openpak.org/ecs/services/ECommerceSOAP
     method: POST
-    body: "x"
+    headers:
+      Content-Type: text/xml; charset=utf-8
+      SOAPAction: urn:ecs.wsapi.broadon.com/GetAccountStatus
+    body: '<?xml version="1.0" encoding="UTF-8"?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ecs="urn:ecs.wsapi.broadon.com"><SOAP-ENV:Body><ecs:GetAccountStatus><ecs:Version>2.0</ecs:Version><ecs:MessageId>EC-0-0</ecs:MessageId><ecs:DeviceId>0</ecs:DeviceId><ecs:AccountId>0</ecs:AccountId><ecs:Region>EUR</ecs:Region><ecs:Country>IE</ecs:Country></ecs:GetAccountStatus></SOAP-ENV:Body></SOAP-ENV:Envelope>'
     interval: 120s
     client:
       insecure: true
     conditions:
-      - "[STATUS] == 500"
-      - "[BODY] == pat(*<!DOCTYPE html>*)"
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*<ErrorCode>0</ErrorCode>*)"
+      - "[BODY] == pat(*<Region>EUR</Region>*)"
 
   - name: Splatfest results
     group: Wii U/3DS

@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.7.7
+
+- Wii U/3DS "eShop": a real ECS `GetAccountStatus` (200, `ErrorCode` 0, the request's own region echoed) instead of a junk body that expected nn-soap's HTML 500 (card #127). nn-soap v0.2.2 answers non-SOAP probes with 400, which the old check would have flagged.
+
 ## v0.7.6
 
 - "Wii/DS game-port front": the greeting pattern has no backslashes (Gatus read them as escapes and never matched).
