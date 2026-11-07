@@ -105,6 +105,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Terraria service
+    group: Core
+    # common/terraria: the one Terraria service (cross-play relay between consoles, compat groups). Card #157.
+    url: https://openpak.org/healthz/terraria
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   - name: Game title storage
     group: Core
     # The neutral title storage core behind every console's per-game player data.
