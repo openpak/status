@@ -113,6 +113,14 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
+  - name: Minecraft service
+    group: Core
+    # common/minecraft: the Minecraft service (Java Edition world, Wii U adapter). Card #162.
+    url: https://openpak.org/healthz/minecraft
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+
   - name: Game title storage
     group: Core
     # The neutral title storage core behind every console's per-game player data.

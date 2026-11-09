@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.8.0
+
+- Core: "Minecraft service" check (openpak.org/healthz/minecraft, common/minecraft, card #162).
+
 ## v0.7.9
 
 - Core: "Terraria service" check (openpak.org/healthz/terraria, common/terraria, card #157).
