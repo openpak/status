@@ -5,7 +5,8 @@ Run daily by openpak-drift-check.timer and by hand (`openpak-drift-check`). Neve
 
 1. Units behind their tag: every ghcr.io/openpak/* quadlet in ~/.config/containers/systemd is compared with the
    newest v*.*.* release image on ghcr (digest of that tag's manifest vs the digests of the image the unit
-   runs). A quadlet carrying a `# pinned: <reason>` comment is listed and skipped.
+   runs). A quadlet carrying a `# pinned: <reason>` comment is listed and skipped. A quadlet that fixes a tag or a
+   digest without that comment is flagged at once, even while it runs the newest release.
 2. Repos with no unit (main role only): every container package in the openpak org must back a quadlet on this
    box, be named in secondary-units.txt (images run on the secondary box) or be in drift-allowlist.txt.
 3. Report: ~/openpak/deploy/drift-report.txt. Exit 1 when anything is flagged, so the oneshot unit fails and
@@ -144,6 +145,11 @@ def main():
         running, have, local = running_digests(u["unit"])
         if u["pin"]:
             pinned.append((u["unit"], name, local or u["image"], top, u["pin"]))
+            continue
+        if dig or tag != "latest":
+            # owner rule 2026-11-10: every service follows :latest; a fixed tag/digest is flagged even while current
+            flagged.append((u["unit"], f"{name}: quadlet pins {('the digest ' + dig[:19] + '..') if dig else ':' + tag}; "
+                            "switch to Image=ghcr.io/openpak/%s:latest + AutoUpdate=registry, or add `# pinned: <reason>`" % name))
             continue
         if not running and (u["oneshot"] or u["manual"]):
             # job or manual unit: compare the image on disk with the release instead

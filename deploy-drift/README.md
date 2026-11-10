@@ -11,7 +11,7 @@ It never rolls anything.
 | `secondary-units.txt` | main `~/openpak/deploy/`: image packages that run on the secondary box (keep in step with its quadlets) |
 
 Checks: (1) each `ghcr.io/openpak/*` quadlet's running digest against the newest `v*.*.*` release image on ghcr;
-a `# pinned: <reason>` comment in the quadlet lists the unit as pinned and skips it. (2) main only: every org container
+a `# pinned: <reason>` comment in the quadlet lists the unit as pinned and skips it; a fixed tag or digest without that comment is flagged immediately, even while current (everything follows `:latest`). (2) main only: every org container
 package must back a quadlet, be in `secondary-units.txt` or be in the allowlist. Oneshot and manual units are compared
 by the image on disk. Each flagged unit says why `podman-auto-update` did not catch it (digest pin, fixed tag, no
 `AutoUpdate=registry`, `:latest` not moved by the release, or the auto-update timer has not run / is disabled).

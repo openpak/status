@@ -3,6 +3,10 @@
 Generated from git history on 2026-09-15. `git log` stays the source
 of truth; this file is the readable summary.
 
+## v0.8.1
+
+- Drift check: a quadlet pinned to a version tag or digest (no `# pinned:` reason) is flagged immediately, not only once behind (prds#174).
+
 ## v0.8.0
 
 - Core: "Minecraft service" check (openpak.org/healthz/minecraft, common/minecraft, card #162).
